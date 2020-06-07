@@ -1,0 +1,12 @@
+scalapb-validate
+Copyright 2020, Nadav Samet and ScalaPB Project Authors
+
+Licensed under Apache License 2.0. See LICENSE for terms.
+
+This project bundles the following dependencies under the Apache Software
+License 2.0:
+
+* protoc-gen-validate
+  Copyright 2019 Envoy Project Authors
+  Licensed under Apache License 2.0. See LICENSE for terms.
+
