@@ -51,11 +51,12 @@ lazy val codeGen = project
   .settings(stdSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "scalapb.validate",
+    buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapb.compiler.Version.scalapbVersion,
-      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0")
     )
   )
 
@@ -72,7 +73,7 @@ def projDef(name: String, shebang: Boolean) =
         )
       ),
       skip in publish := true,
-      Compile / mainClass := Some("scalapb.validate.CodeGenerator")
+      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
     )
 
 lazy val protocGenScalaPbValidateUnix =

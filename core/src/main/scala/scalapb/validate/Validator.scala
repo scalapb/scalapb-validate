@@ -7,6 +7,8 @@ sealed trait Result {
   def isSuccess: Boolean
   def isFailure: Boolean
   def toFailure: Option[Failure]
+
+  def &&(other: => Result) = if (isSuccess) other else this
 }
 
 object Result {
@@ -21,6 +23,12 @@ object Result {
           "Unexpected exception. Please report this as a bug"
         )
     }
+
+  def apply(cond: => Boolean, onError: => ValidationException) =
+    if (cond) Success else Failure(onError)
+
+  def optional[T](value: Option[T])(eval: T => Result): Result =
+    value.fold[Result](Success)(eval)
 }
 
 case object Success extends Result {
@@ -36,5 +44,22 @@ case class Failure(violation: ValidationException) extends Result {
 }
 
 trait Validator[T] {
+  self =>
   def validate(t: T): Result
+
+  def optional: Validator[Option[T]] =
+    new Validator[Option[T]] {
+      def validate(t: Option[T]): Result =
+        t.fold[Result](Success)(self.validate)
+    }
+}
+
+object Validator {
+  def apply[T](
+      cond: T => Boolean,
+      onError: T => ValidationException
+  ): Validator[T] =
+    new Validator[T] {
+      def validate(t: T): Result = if (cond(t)) Success else Failure(onError(t))
+    }
 }
