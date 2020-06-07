@@ -20,4 +20,8 @@ message Person {
     double lat = 1 [(validate.rules).double = { gte: -90,  lte: 90 }];
     double lng = 2 [(validate.rules).double = { gte: -180, lte: 180 }];
   }
+
+  bool is_old = 5 [(validate.rules).bool.const = false];
+
+  fixed32 age = 6 [(validate.rules).fixed32 = {gte:30, lt: 40}];
 }
