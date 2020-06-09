@@ -16,7 +16,7 @@ jobs:
         path: "/home/runner/.cache/bazel"
         key: bazel
 
-    - name: Install bazelisk
+    - name: Build test executor
       run: |
         ./make_harness.sh
 
