@@ -15,14 +15,16 @@ object Result {
   def run[T](code: => T): Result =
     (Try[T] {
       code
-    }).toOption match {
-      case None                          => Success
-      case Some(ex: ValidationException) => Failure(ex)
-      case Some(ex) =>
-        throw new RuntimeException(
-          "Unexpected exception. Please report this as a bug"
-        )
-    }
+    }).toEither.fold(
+      {
+        case ex: ValidationException => Failure(ex)
+        case ex: Throwable =>
+          throw new RuntimeException(
+            s"Unexpected exception. Please report this as a bug: ${ex.getMessage()}"
+          )
+      },
+      _ => Success
+    )
 
   def apply(cond: => Boolean, onError: => ValidationException) =
     if (cond) Success else Failure(onError)

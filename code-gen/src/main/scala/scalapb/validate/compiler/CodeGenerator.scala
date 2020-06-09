@@ -125,6 +125,9 @@ class MessagePrinter(
       case Type.Sfixed64(numericRules) =>
         NumericRulesGen.numericRules(SCALA_LONG, numericRules)
 
+      case Type.Fixed64(numericRules) =>
+        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
+
       case Type.Int64(numericRules) =>
         NumericRulesGen.numericRules(SCALA_LONG, numericRules)
 
@@ -135,6 +138,9 @@ class MessagePrinter(
         NumericRulesGen.numericRules(SCALA_INT, numericRules)
 
       case Type.Sfixed32(numericRules) =>
+        NumericRulesGen.numericRules(SCALA_INT, numericRules)
+
+      case Type.Fixed32(numericRules) =>
         NumericRulesGen.numericRules(SCALA_INT, numericRules)
 
       case Type.Int32(numericRules) =>
