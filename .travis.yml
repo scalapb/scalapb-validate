@@ -1,4 +1,5 @@
 language: scala
+dist: bionic
 sudo: false
 jdk: openjdk11
 scala:
@@ -7,6 +8,7 @@ scala:
 
 before_install:
 - git fetch --tags
+- ./make_harness.sh
 
 stages:
 - name: test
@@ -14,9 +16,8 @@ stages:
   if: ((branch = master AND type = push) OR (tag IS present)) AND NOT fork
 
 script:
-- sbt ++$TRAVIS_SCALA_VERSION test
+- sbt ++$TRAVIS_SCALA_VERSION test "e2e/test:runMain scalapb.validate.ScalaHarness"
 - sbt scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
-- cd examples && sbt compile && sbt scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
 
 jobs:
   include:
@@ -25,6 +26,7 @@ jobs:
 
 cache:
   directories:
+  - $HOME/.cache/bazel
   - $HOME/.cache/coursier
   - $HOME/.ivy2/cache
   - $HOME/.sbt
