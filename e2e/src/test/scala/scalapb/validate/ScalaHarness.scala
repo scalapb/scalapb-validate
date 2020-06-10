@@ -105,30 +105,6 @@ object ScalaHarness extends cask.MainRoutes {
 
   initialize()
 
-  def serverProcess(ss: ServerSocket) =
-    while (true) {
-      val client = ss.accept()
-      val testCase = TestCase.parseFrom(client.getInputStream())
-      val message = testCase.getMessage.typeUrl.substring(20)
-      val cmp = typeMap.find(_._1 == message).get._2
-      val klass = Class.forName(
-        cmp.defaultInstance.getClass().getCanonicalName() + "Validator$"
-      )
-      val vtor = klass
-        .getField("MODULE$")
-        .get(null)
-        .asInstanceOf[Validator[GeneratedMessage]]
-      val inst = testCase.getMessage.unpack(cmp)
-      val result = vtor.validate(inst) match {
-        case Success     => TestResult(valid = true)
-        case Failure(ex) => TestResult(valid = false, reason = ex.getMessage())
-      }
-
-      val out = client.getOutputStream()
-      out.write(result.toByteArray)
-      client.close()
-    }
-
   def createScript(port: Int): Path = {
     val fileName = Files.createTempFile("spv-", ".sh")
     val os = Files.newOutputStream(fileName)
@@ -159,6 +135,9 @@ object ScalaHarness extends cask.MainRoutes {
       .setHandler(defaultHandler)
       .build
     Future(server.start())
+    // Give the server a chance to start before we start making requests.
+    // TODO: replace this with a more robust check
+    Thread.sleep(100)
     val script = createScript(port)
     val status =
       try Process(
