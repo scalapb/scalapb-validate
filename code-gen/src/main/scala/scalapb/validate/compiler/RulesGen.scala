@@ -3,11 +3,17 @@ package scalapb.validate.compiler
 import io.envoyproxy.pgv.validate.validate.FieldRules
 import io.envoyproxy.pgv.validate.validate.FieldRules.Type
 
+import scalapb.validate.compiler.NumericRulesGen.timestampOrdering
+import scalapb.validate.compiler.NumericRulesGen.durationOrdering
+
 object RulesGen {
   private val SCALA_INT = "scala.Int"
   private val SCALA_LONG = "scala.Long"
   private val SCALA_FLOAT = "scala.Float"
   private val SCALA_DOUBLE = "scala.Double"
+  private val TIMESTAMP = "com.google.protobuf.timestamp.Timestamp"
+  private val DURATION = "com.google.protobuf.duration.Duration"
+  // import NumericRulesGen.timestampOrdering
 
   def rulesSingle(
       rules: FieldRules
@@ -51,6 +57,12 @@ object RulesGen {
 
       case Type.Float(numericRules) =>
         NumericRulesGen.numericRules(SCALA_FLOAT, numericRules)
+
+      case Type.Timestamp(timestampRules) =>
+        NumericRulesGen.comparativeRules(TIMESTAMP, timestampRules)
+
+      case Type.Duration(durationRules) =>
+        NumericRulesGen.comparativeRules(DURATION, durationRules)
 
       case Type.Bool(boolRules) =>
         BooleanRulesGen.booleanRules(boolRules)

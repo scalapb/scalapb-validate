@@ -99,6 +99,9 @@ class MessagePrinter(
     val fp = new FunctionalPrinter()
     fp.add(s"package ${message.getFile.scalaPackage.fullName}", "")
       .add()
+      .add(
+        "import scalapb.validate.NumericValidator.{durationOrdering, timestampOrdering}"
+      )
       .call(printObject)
       .result()
   }

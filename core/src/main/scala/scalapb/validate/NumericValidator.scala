@@ -2,8 +2,26 @@ package scalapb.validate
 
 import io.envoyproxy.pgv.ValidationException
 import math.Ordering.Implicits._
+import com.google.protobuf.timestamp.Timestamp
+import com.google.protobuf.duration.Duration
 
 object NumericValidator {
+  implicit val timestampOrdering = new Ordering[Timestamp] {
+    def compare(x: Timestamp, y: Timestamp): Int = {
+      val o1 = java.lang.Long.compare(x.seconds, y.seconds)
+      if (o1 != 0) o1
+      else java.lang.Integer.compare(x.nanos, y.nanos)
+    }
+  }
+
+  implicit val durationOrdering = new Ordering[Duration] {
+    def compare(x: Duration, y: Duration): Int = {
+      val o1 = java.lang.Long.compare(x.seconds, y.seconds)
+      if (o1 != 0) o1
+      else java.lang.Integer.compare(x.nanos, y.nanos)
+    }
+  }
+
   def greaterThan[T: Ordering](name: String, v: T, limit: T) =
     Result(
       v > limit,
