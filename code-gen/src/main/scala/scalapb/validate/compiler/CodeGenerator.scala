@@ -4,7 +4,6 @@ import com.google.protobuf.Descriptors.{Descriptor, FieldDescriptor}
 import com.google.protobuf.ExtensionRegistry
 import com.google.protobuf.compiler.PluginProtos.CodeGeneratorResponse
 import io.envoyproxy.pgv.validate.Validate
-import io.envoyproxy.pgv.validate.validate.FieldRules.Type
 import io.envoyproxy.pgv.validate.validate.FieldRules
 import protocbridge.Artifact
 import protocbridge.codegen.{CodeGenApp, CodeGenRequest, CodeGenResponse}
@@ -104,65 +103,14 @@ class MessagePrinter(
       .result()
   }
 
-  private val SCALA_INT = "scala.Int"
-  private val SCALA_LONG = "scala.Long"
-  private val SCALA_FLOAT = "scala.Float"
-  private val SCALA_DOUBLE = "scala.Double"
-
-  def rulesSingle(
-      rules: FieldRules
-  ): Seq[Rule] =
-    rules.`type` match {
-      case Type.String(stringRules) =>
-        StringRulesGen.print(stringRules)
-
-      case Type.Uint64(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
-
-      case Type.Sint64(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
-
-      case Type.Sfixed64(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
-
-      case Type.Fixed64(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
-
-      case Type.Int64(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_LONG, numericRules)
-
-      case Type.Uint32(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_INT, numericRules)
-
-      case Type.Sint32(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_INT, numericRules)
-
-      case Type.Sfixed32(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_INT, numericRules)
-
-      case Type.Fixed32(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_INT, numericRules)
-
-      case Type.Int32(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_INT, numericRules)
-
-      case Type.Double(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_DOUBLE, numericRules)
-
-      case Type.Float(numericRules) =>
-        NumericRulesGen.numericRules(SCALA_FLOAT, numericRules)
-
-      case Type.Bool(boolRulesGen) =>
-        BooleanRulesGen.booleanRules(boolRulesGen)
-
-      case _ => Seq.empty
-    }
-
   sealed trait RenderedResult
 
   case class SingularResult(line: String) extends RenderedResult
 
   case class OptionalResult(accessor: String, lines: Seq[String])
+      extends RenderedResult
+
+  case class RepeatedResult(accessor: String, lines: Seq[String])
       extends RenderedResult
 
   def renderedRulesForField(fd: FieldDescriptor): Seq[RenderedResult] = {
@@ -173,7 +121,7 @@ class MessagePrinter(
       else
         s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName}"
 
-    val rules = rulesSingle(rulesProto)
+    val rules = RulesGen.rulesSingle(rulesProto)
 
     val maybeOpt =
       if ((fd.isInOneof || fd.supportsPresence) && rules.nonEmpty)
@@ -184,6 +132,27 @@ class MessagePrinter(
           )
         )
       else Seq.empty
+
+    val maybeRepeated = if (fd.isRepeated() && !fd.isMapField()) {
+      val itemRules = RulesGen.rulesSingle(rulesProto.getRepeated.getItems)
+
+      val messageRules = Rule.ifSet(
+        fd.isMessage &&
+          !rulesProto.getRepeated.getItems.getMessage.getSkip &&
+          !fd.getMessageType.getFullName.startsWith("google.protobuf")
+      )(MessageValidateRule(validatorName(fd.getMessageType()).fullName))
+
+      val allRules = itemRules ++ messageRules
+
+      if (allRules.nonEmpty)
+        Seq(
+          RepeatedResult(
+            accessor,
+            allRules.map(r => "  " + r.render(fd, "_value"))
+          )
+        )
+      else Seq.empty
+    } else Seq.empty
 
     val messageRules = if (fd.isMessage) {
       val maybeRequired =
@@ -210,7 +179,7 @@ class MessagePrinter(
         rules.map(r => SingularResult(r.render(fd, accessor)))
       else Seq.empty
 
-    maybeSingular ++ maybeOpt ++ messageRules
+    maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules
   }
 
   def formattedRulesForField(
@@ -221,6 +190,10 @@ class MessagePrinter(
         Seq(line)
       case OptionalResult(accessor, lines) =>
         Seq(s"scalapb.validate.Result.optional($accessor) { _value =>") ++
+          lines.dropRight(1).map(l => l + " &&") ++
+          Seq(lines.last, "}")
+      case RepeatedResult(accessor, lines) =>
+        Seq(s"scalapb.validate.Result.repeated($accessor) { _value =>") ++
           lines.dropRight(1).map(l => l + " &&") ++
           Seq(lines.last, "}")
     }
