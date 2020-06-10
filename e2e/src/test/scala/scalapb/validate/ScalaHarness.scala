@@ -22,12 +22,12 @@ import java.net.ServerSocket
 import tests.harness.harness.TestResult
 import scalapb.GeneratedMessage
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.nio.file.Files
 import java.nio.file.Path
 import scala.sys.process.Process
 import scala.jdk.CollectionConverters._
 import java.nio.file.attribute.PosixFilePermission
+import io.undertow.Undertow
 
 /**
   * How this works?
@@ -43,15 +43,11 @@ import java.nio.file.attribute.PosixFilePermission
   * a test summary.
   *
   * Done naively, this approach would require invoking the JVM (or SBT) for each of the 900+
-  * test cases provided by PGV. To get around it, we start here a TCP server that runs the
-  * same protocol of TCP connections. The executor is provided with a shell script that
-  * uses `netcat`.
-  *
-  * For simplicity, this program can only handle one connection at a time, though the executor
-  * is capable of making parallel requests. However, improvements are currently unnecessary
-  * as this entire suite finishes under 1s on my workstation.
+  * test cases provided by PGV. To get around it, we start here an HTTP server that implements
+  * the same protocol over HTTP. The executor is provided with a shell script that calls `curl`
+  * to connect to the server.
   */
-object ScalaHarness {
+object ScalaHarness extends cask.MainRoutes {
   val files = Seq(
     BoolProto,
     BytesProto,
@@ -87,6 +83,28 @@ object ScalaHarness {
       (cmp.scalaDescriptor.fullName, cmp)
     }.toMap
 
+  @cask.post("/")
+  def processRequest(req: cask.Request) = {
+    val testCase = TestCase.parseFrom(req.readAllBytes())
+    val message = testCase.getMessage.typeUrl.substring(20)
+    val cmp = typeMap.find(_._1 == message).get._2
+    val klass = Class.forName(
+      cmp.defaultInstance.getClass().getCanonicalName() + "Validator$"
+    )
+    val vtor = klass
+      .getField("MODULE$")
+      .get(null)
+      .asInstanceOf[Validator[GeneratedMessage]]
+    val inst = testCase.getMessage.unpack(cmp)
+    val result = vtor.validate(inst) match {
+      case Success     => TestResult(valid = true)
+      case Failure(ex) => TestResult(valid = false, reason = ex.getMessage())
+    }
+    result.toByteArray
+  }
+
+  initialize()
+
   def serverProcess(ss: ServerSocket) =
     while (true) {
       val client = ss.accept()
@@ -116,7 +134,7 @@ object ScalaHarness {
     val os = Files.newOutputStream(fileName)
     os.write(s"""#!/usr/bin/env bash
              |set -e
-             |nc -N localhost $port
+             |curl --url http://localhost:$port/ -s --data-binary @-
              """.stripMargin.getBytes("UTF-8"))
     os.close()
     Files.setPosixFilePermissions(
@@ -129,24 +147,32 @@ object ScalaHarness {
     fileName
   }
 
-  def main(args: Array[String]): Unit = {
+  override val port = {
     val ss = new ServerSocket(0)
-    val port = ss.getLocalPort()
+    try ss.getLocalPort()
+    finally ss.close()
+  }
+
+  override def main(args: Array[String]): Unit = {
+    val server = Undertow.builder
+      .addHttpListener(port, host)
+      .setHandler(defaultHandler)
+      .build
+    Future(server.start())
     val script = createScript(port)
     val status =
-      try {
-        Future(serverProcess(ss))
-        Process(
-          ".pgv/executor.exe",
-          Seq(
-            "-external_harness",
-            script.toString()
-          )
-        ).!
-      } finally {
-        ss.close()
+      try Process(
+        ".pgv/executor.exe",
+        Seq(
+          "-external_harness",
+          script.toString()
+        )
+      ).!
+      finally {
         Files.delete(script)
+        server.stop()
       }
+
     sys.exit(status)
   }
 }
