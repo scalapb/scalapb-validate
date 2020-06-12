@@ -60,10 +60,11 @@ lazy val codeGen = project
     )
   )
 
-lazy val protocGenScalaPbValidate = protocGenProject("protoc-gen-scalapb-validate", codeGen)
-  .settings(
-    Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
-  )
+lazy val protocGenScalaPbValidate =
+  protocGenProject("protoc-gen-scalapb-validate", codeGen)
+    .settings(
+      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
+    )
 
 lazy val e2e = project
   .in(file("e2e"))
@@ -73,7 +74,7 @@ lazy val e2e = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
-      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
+      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     protocGenScalaPbValidate.addDependency,
     PB.targets in Compile := Seq(
