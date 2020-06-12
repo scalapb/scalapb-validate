@@ -73,7 +73,7 @@ object ComparativeRulesGen {
         Seq(
           basic(
             s"$CV.range$gtType$ltType$ex",
-            Seq(
+            args = Seq(
               show(gtVal),
               show(ltVal)
             )

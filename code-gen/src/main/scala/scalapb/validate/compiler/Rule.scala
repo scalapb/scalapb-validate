@@ -7,10 +7,24 @@ import scalapb.compiler.ExpressionBuilder
 import scalapb.compiler.EnclosingType
 import scalapb.compiler.FunctionApplication
 
+/** Represents a generated function call that returns a Result.
+  *
+  * funcName: fully qualified functin name. The function takes potentially the name
+  *           (if needsName is true),  then the value to be tested, then the list of
+  *           args are passed:
+  *           funcName([name], value, *args)
+  * needsName: whether the first argument is the name of the field being tested.
+  * args: arguments to pass after the value.
+  * inputTransform: transformation to apply to the value
+  * outputTransform: transformation to apply to the result of funcName
+  * imports: list of imports to add to the top of the file (no need to dedupe here)
+  * preamble: code to be added for static definitions. Can be used for constants that
+  *           needs to be computed only once.
+  */
 case class Rule(
     funcName: String,
-    args: Seq[String],
     needsName: Boolean,
+    args: Seq[String],
     inputTransform: Expression,
     outputTranform: Expression,
     imports: Seq[String],
@@ -42,24 +56,25 @@ object Rule {
   def basic(
       funcName: String,
       args: Seq[String],
-      transform: Expression = Identity
+      inputTransform: Expression = Identity
   ): Rule =
-    Rule(funcName, args, true, transform, Identity, Nil, Nil)
+    Rule(funcName, true, args, inputTransform, Identity, Nil, Nil)
 
-  def basic(funcName: String, arg1: String): Rule =
-    basic(funcName, Seq(arg1))
+  def basic(funcName: String, args: String*): Rule =
+    basic(funcName, args)
 
-  def basic(funcName: String): Rule =
-    basic(funcName, Seq.empty)
-
-  def java(funcName: String, transform: Expression, args: String*): Rule =
-    basic(funcName, args, transform).wrapJava
+  def java(
+      funcName: String,
+      args: Seq[String],
+      inputTransform: Expression
+  ): Rule =
+    basic(funcName, args, inputTransform).wrapJava
 
   def java(funcName: String, args: String*): Rule =
     basic(funcName, args, Identity).wrapJava
 
   def messageValidate(validator: String): Rule =
-    Rule(s"$validator.validate", Seq.empty, false, Identity, Identity, Nil, Nil)
+    Rule(s"$validator.validate", false, Seq.empty, Identity, Identity, Nil, Nil)
 
   def ifSet[T](cond: => Boolean)(value: => T): Option[T] =
     if (cond) Some(value) else None

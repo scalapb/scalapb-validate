@@ -10,11 +10,13 @@ object TimestampRulesGen {
       rules.within.map { d =>
         Rule.java(
           "io.envoyproxy.pgv.TimestampValidation.within",
+          Seq(
+            s"io.envoyproxy.pgv.TimestampValidation.toDuration(${d.seconds}, ${d.nanos})",
+            "io.envoyproxy.pgv.TimestampValidation.currentTimestamp()"
+          ),
           FunctionApplication(
             "com.google.protobuf.timestamp.Timestamp.toJavaProto"
-          ),
-          s"io.envoyproxy.pgv.TimestampValidation.toDuration(${d.seconds}, ${d.nanos})",
-          "io.envoyproxy.pgv.TimestampValidation.currentTimestamp()"
+          )
         )
       },
       Rule.ifSet(rules.getLtNow)(
@@ -36,11 +38,13 @@ object TimestampRulesGen {
       rules.within.map { d =>
         Rule.java(
           "io.envoyproxy.pgv.TimestampValidation.within",
+          Seq(
+            s"io.envoyproxy.pgv.TimestampValidation.toDuration(${d.seconds}, ${d.nanos})",
+            "io.envoyproxy.pgv.TimestampValidation.currentTimestamp()"
+          ),
           FunctionApplication(
             "com.google.protobuf.timestamp.Timestamp.toJavaProto"
-          ),
-          s"io.envoyproxy.pgv.TimestampValidation.toDuration(${d.seconds}, ${d.nanos})",
-          "io.envoyproxy.pgv.TimestampValidation.currentTimestamp()"
+          )
         )
       }
     ).flatten
