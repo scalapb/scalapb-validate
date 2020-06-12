@@ -14,6 +14,7 @@ import scalapb.compiler.{
 }
 import scalapb.options.compiler.Scalapb
 import scalapb.validate.compat.JavaConverters._
+import com.google.protobuf.Descriptors.OneofDescriptor
 
 object CodeGenerator extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
@@ -72,7 +73,8 @@ class MessagePrinter(
 
   def printValidate(fp: FunctionalPrinter): FunctionalPrinter = {
     val ruleGroups =
-      message.getFields.asScala.toSeq.flatMap(formattedRulesForField)
+      message.getFields.asScala.toSeq.flatMap(formattedRulesForField) ++
+      message.getOneofs.asScala.toSeq.flatMap(formattedRulesForOneofs)
     val isDisabled = message.getOptions().getExtension(Validate.disabled)
     fp.add(
         s"def validate(input: ${message.scalaType.fullName}): $Result ="
@@ -195,7 +197,7 @@ class MessagePrinter(
       val maybeRequired: Option[SingularResult] = None
 
       val maybeNested = Rule.ifSet(
-        fd.supportsPresence && !rulesProto.getMessage.getSkip &&
+        (fd.supportsPresence || fd.isInOneof) && !rulesProto.getMessage.getSkip &&
           !fd.getMessageType.getFullName.startsWith("google.protobuf")
       )(
         OptionalResult(
@@ -237,6 +239,12 @@ class MessagePrinter(
           lines.dropRight(1).map(l => l + " &&") ++
           Seq(lines.last, "}")
     }
+
+  def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
+    val isRequired = oneof.getOptions().getExtension(Validate.required)
+    if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof.getName()}", input.${oneof.scalaName.name})"""))
+    else Seq.empty
+  }
 
   def result(): CodeGeneratorResponse.File = {
     val b = CodeGeneratorResponse.File.newBuilder()
