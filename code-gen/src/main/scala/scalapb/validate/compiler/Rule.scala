@@ -46,8 +46,11 @@ object Rule {
   def basic(funcName: String): BasicRule =
     basic(funcName, Seq.empty)
 
+  def java(funcName: String, transform: Expression, args: String*): Rule =
+    basic(funcName, args, transform).wrapJava
+
   def java(funcName: String, args: String*): Rule =
-    basic(funcName, args).wrapJava
+    basic(funcName, args, Identity).wrapJava
 
   def messageValidate(validator: String): Rule =
     MessageValidateRule(validator)

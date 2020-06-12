@@ -29,7 +29,7 @@ object NumericRulesGen {
     )
 
   // constant definition
-  private val NV = "scalapb.validate.NumericValidation"
+  private[validate] val NV = "scalapb.validate.NumericValidation"
 
   def constRule(scalaType: String, const: String) =
     basic(s"$NV.constant[$scalaType]", const)

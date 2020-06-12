@@ -60,7 +60,8 @@ object RulesGen {
         NumericRulesGen.numericRules(SCALA_FLOAT, numericRules)
 
       case Type.Timestamp(timestampRules) =>
-        NumericRulesGen.comparativeRules(TIMESTAMP, timestampRules)
+        NumericRulesGen.comparativeRules(TIMESTAMP, timestampRules) ++
+          TimestampRulesGen.timestampRules(timestampRules)
 
       case Type.Duration(durationRules) =>
         NumericRulesGen.numericRules(DURATION, durationRules)
