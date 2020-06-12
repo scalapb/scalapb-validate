@@ -123,6 +123,32 @@ class MessagePrinter(
       lines: Seq[Rule]
   ) extends RenderedResult
 
+  def repeatedRules(
+      fd: FieldDescriptor,
+      rulesProto: FieldRules,
+      accessor: String
+  ): Seq[RenderedResult] = {
+    val itemRules = RulesGen.rulesSingle(rulesProto)
+
+    val messageRules = Rule.ifSet(
+      fd.isMessage &&
+        !rulesProto.getRepeated.getItems.getMessage.getSkip &&
+        !fd.getMessageType.getFullName.startsWith("google.protobuf")
+    )(MessageValidateRule(validatorName(fd.getMessageType()).fullName))
+
+    val allRules = itemRules ++ messageRules
+
+    if (allRules.nonEmpty)
+      Seq(
+        RepeatedResult(
+          fd,
+          accessor,
+          allRules
+        )
+      )
+    else Seq.empty
+  }
+
   def renderedRulesForField(fd: FieldDescriptor): Seq[RenderedResult] = {
     val rulesProto =
       FieldRules.fromJavaProto(fd.getOptions.getExtension(Validate.rules))
@@ -144,27 +170,21 @@ class MessagePrinter(
         )
       else Seq.empty
 
-    val maybeRepeated = if (fd.isRepeated() && !fd.isMapField()) {
-      val itemRules = RulesGen.rulesSingle(rulesProto.getRepeated.getItems)
-
-      val messageRules = Rule.ifSet(
-        fd.isMessage &&
-          !rulesProto.getRepeated.getItems.getMessage.getSkip &&
-          !fd.getMessageType.getFullName.startsWith("google.protobuf")
-      )(MessageValidateRule(validatorName(fd.getMessageType()).fullName))
-
-      val allRules = itemRules ++ messageRules
-
-      if (allRules.nonEmpty)
-        Seq(
-          RepeatedResult(
-            fd,
-            accessor,
-            allRules
+    val maybeRepeated =
+      if (fd.isRepeated() && !fd.isMapField())
+        repeatedRules(fd, rulesProto.getRepeated.getItems, accessor)
+      else if (fd.isRepeated() && fd.isMapField())
+        repeatedRules(
+          fd.getMessageType().findFieldByNumber(1),
+          rulesProto.getMap.getKeys,
+          accessor + ".keys"
+        ) ++
+          repeatedRules(
+            fd.getMessageType().findFieldByNumber(2),
+            rulesProto.getMap.getValues,
+            accessor + ".values"
           )
-        )
       else Seq.empty
-    } else Seq.empty
 
     val messageRules = if (fd.isMessage) {
       val maybeRequired: Option[SingularResult] = None

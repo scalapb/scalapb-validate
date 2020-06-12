@@ -97,8 +97,15 @@ object ScalaHarness extends cask.MainRoutes {
       .asInstanceOf[Validator[GeneratedMessage]]
     val inst = testCase.getMessage.unpack(cmp)
     val result = vtor.validate(inst) match {
-      case Success     => TestResult(valid = true)
-      case Failure(ex) => TestResult(valid = false, reason = ex.getMessage())
+      case Success => TestResult(valid = true)
+      case Failure(ex) =>
+        val allowFailure =
+          ex.getReason() == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
+        TestResult(
+          valid = false,
+          reason = ex.getMessage(),
+          allowFailure = allowFailure
+        )
     }
     result.toByteArray
   }

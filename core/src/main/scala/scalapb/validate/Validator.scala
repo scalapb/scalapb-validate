@@ -32,7 +32,7 @@ object Result {
   def optional[T](value: Option[T])(eval: T => Result): Result =
     value.fold[Result](Success)(eval)
 
-  def repeated[T](value: Seq[T])(eval: T => Result) =
+  def repeated[T](value: Iterable[T])(eval: T => Result) =
     value.iterator.map(eval).find(_.isFailure).getOrElse(Success)
 }
 

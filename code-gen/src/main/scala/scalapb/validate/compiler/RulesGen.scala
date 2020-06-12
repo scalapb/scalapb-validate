@@ -77,6 +77,9 @@ object RulesGen {
           MethodApplication("typeUrl")
         )
 
+      case Type.Map(mapRules) =>
+        MapRulesGen.mapRules(mapRules)
+
       case _ => Seq.empty
     }
 
