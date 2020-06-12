@@ -5,6 +5,7 @@ import io.envoyproxy.pgv.validate.validate.FieldRules.Type
 
 import scalapb.validate.compiler.NumericRulesGen.timestampOrdering
 import scalapb.validate.compiler.NumericRulesGen.durationOrdering
+import scalapb.compiler.MethodApplication
 
 object RulesGen {
   private val SCALA_INT = "scala.Int"
@@ -62,13 +63,16 @@ object RulesGen {
         NumericRulesGen.comparativeRules(TIMESTAMP, timestampRules)
 
       case Type.Duration(durationRules) =>
-        NumericRulesGen.comparativeRules(DURATION, durationRules)
+        NumericRulesGen.numericRules(DURATION, durationRules)
 
       case Type.Bool(boolRules) =>
         BooleanRulesGen.booleanRules(boolRules)
 
       case Type.Repeated(repeatedRules) =>
         RepeatedRulesGen.repeatedRules(repeatedRules)
+
+      case Type.Any(anyRules) =>
+        NumericRulesGen.membershipRules(anyRules, MethodApplication("typeUrl"))
 
       case _ => Seq.empty
     }

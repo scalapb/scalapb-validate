@@ -7,6 +7,8 @@ import Rule.basic
 import com.google.protobuf.duration.Duration
 import scala.reflect.classTag
 import scala.reflect.ClassTag
+import scalapb.compiler.Identity
+import scalapb.compiler.Expression
 
 object NumericRulesGen {
 
@@ -25,7 +27,7 @@ object NumericRulesGen {
 
   type NumericRules[T] = ComparativeRules[T] with MembershipRules[T]
 
-  def numericRules[T: Numeric: Show: ClassTag](
+  def numericRules[T: Ordering: Show: ClassTag](
       scalaType: String,
       rules: NumericRules[T]
   ): Seq[Rule] =
@@ -83,8 +85,10 @@ object NumericRulesGen {
         Seq(
           basic(
             s"$NV.range$gtType$ltType$ex[$scalaType]",
-            show(gtVal),
-            show(ltVal)
+            Seq(
+              show(gtVal),
+              show(ltVal)
+            )
           )
         )
       case _ =>
@@ -103,7 +107,8 @@ object NumericRulesGen {
   }
 
   def membershipRules[T: ClassTag](
-      rules: MembershipRules[T]
+      rules: MembershipRules[T],
+      transform: Expression = Identity
   )(implicit show: Show[T]) = {
     val runtimeClass = classTag[T].runtimeClass
     val className =
@@ -120,7 +125,8 @@ object NumericRulesGen {
         Some(
           basic(
             s"$NV.in[$className]",
-            rules.in.map(v => show(v)).mkString("Seq(", ", ", ")")
+            Seq(rules.in.map(v => show(v)).mkString("Seq(", ", ", ")")),
+            transform
           )
         )
       else None,
@@ -128,7 +134,8 @@ object NumericRulesGen {
         Some(
           basic(
             s"$NV.notIn[$className]",
-            rules.notIn.map(v => show(v)).mkString("Seq(", ", ", ")")
+            Seq(rules.notIn.map(v => show(v)).mkString("Seq(", ", ", ")")),
+            transform
           )
         )
       else None
