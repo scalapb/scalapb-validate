@@ -73,13 +73,18 @@ class MessagePrinter(
   def printValidate(fp: FunctionalPrinter): FunctionalPrinter = {
     val ruleGroups =
       message.getFields.asScala.toSeq.flatMap(formattedRulesForField)
+    val isDisabled = message.getOptions().getExtension(Validate.disabled)
     fp.add(
         s"def validate(input: ${message.scalaType.fullName}): $Result ="
       )
-      .indented(
-        _.addGroupsWithDelimiter(" &&")(ruleGroups)
+      .when(!isDisabled)(
+        _.indented(
+          _.addGroupsWithDelimiter(" &&")(ruleGroups)
+        )
       )
-      .when(ruleGroups.isEmpty)(_.add("  scalapb.validate.Success"))
+      .when(ruleGroups.isEmpty || isDisabled)(
+        _.add("  scalapb.validate.Success")
+      )
       .add("")
       .print(message.getNestedTypes.asScala)((fp, fd) =>
         new MessagePrinter(implicits, fd).printObject(fp)
@@ -132,7 +137,7 @@ class MessagePrinter(
 
     val messageRules = Rule.ifSet(
       fd.isMessage &&
-        !rulesProto.getRepeated.getItems.getMessage.getSkip &&
+        !rulesProto.getMessage.getSkip &&
         !fd.getMessageType.getFullName.startsWith("google.protobuf")
     )(MessageValidateRule(validatorName(fd.getMessageType()).fullName))
 
