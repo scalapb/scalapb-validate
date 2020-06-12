@@ -17,7 +17,7 @@ sonatypeProfileName := "com.thesamet"
 inThisBuild(
   List(
     organization := "com.thesamet.scalapb",
-    homepage := Some(url("https://github.com/scalameta/sbt-scalafmt")),
+    homepage := Some(url("https://github.com/scalapb/scalapb-validate")),
     licenses := List(
       "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
     ),
@@ -60,44 +60,9 @@ lazy val codeGen = project
     )
   )
 
-def projDef(name: String, shebang: Boolean) =
-  sbt
-    .Project(name, new File(name))
-    .enablePlugins(AssemblyPlugin)
-    .dependsOn(codeGen)
-    .settings(stdSettings)
-    .settings(
-      assemblyOption in assembly := (assemblyOption in assembly).value.copy(
-        prependShellScript = Some(
-          sbtassembly.AssemblyPlugin.defaultUniversalScript(shebang = shebang)
-        )
-      ),
-      skip in publish := true,
-      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
-    )
-
-lazy val protocGenScalaPbValidateUnix =
-  projDef("protoc-gen-scalapb-validate-unix", shebang = true)
-
-lazy val protocGenScalaPbValidateWindows =
-  projDef("protoc-gen-scalapb-validate-windows", shebang = false)
-
-lazy val protocGenScalaPbValidate = project
+lazy val protocGenScalaPbValidate = protocGenProject("protoc-gen-scalapb-validate", codeGen)
   .settings(
-    crossScalaVersions := List(Scala213),
-    name := "protoc-gen-scalapb-validate",
-    publishArtifact in (Compile, packageDoc) := false,
-    publishArtifact in (Compile, packageSrc) := false,
-    crossPaths := false,
-    addArtifact(
-      Artifact("protoc-gen-scalapb-validate", "jar", "sh", "unix"),
-      assembly in (protocGenScalaPbValidateUnix, Compile)
-    ),
-    addArtifact(
-      Artifact("protoc-gen-scalapb-validate", "jar", "bat", "windows"),
-      assembly in (protocGenScalaPbValidateWindows, Compile)
-    ),
-    autoScalaLibrary := false
+    Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
   )
 
 lazy val e2e = project
@@ -108,17 +73,13 @@ lazy val e2e = project
     skip in publish := true,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
-      // "io.undertow" % "undertow-servlet" % "2.1.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
     ),
-    Compile / PB.generate := ((Compile / PB.generate) dependsOn (protocGenScalaPbValidateUnix / Compile / assembly)).value,
+    protocGenScalaPbValidate.addDependency,
     PB.targets in Compile := Seq(
       scalapb.gen(grpc = true) -> (sourceManaged in Compile).value,
       (
-        PB.gens.plugin(
-          "validate",
-          (protocGenScalaPbValidateUnix / assembly / target).value / "protoc-gen-scalapb-validate-unix-assembly-" + version.value + ".jar"
-        ),
+        protocGenScalaPbValidate.plugin.value,
         Seq()
       ) -> (Compile / sourceManaged).value
     ),
