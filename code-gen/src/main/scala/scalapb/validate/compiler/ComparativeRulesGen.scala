@@ -8,9 +8,9 @@ import com.google.protobuf.duration.Duration
 import scala.reflect.ClassTag
 import scala.reflect.classTag
 
-object NumericRulesGen {
-  val TimestampOrdering = "scalapb.validate.NumericValidation.timestampOrdering"
-  val DurationOrdering = "scalapb.validate.NumericValidation.durationOrdering"
+object ComparativeRulesGen {
+  val TimestampOrdering = "scalapb.validate.ComparativeValidation.timestampOrdering"
+  val DurationOrdering = "scalapb.validate.ComparativeValidation.durationOrdering"
 
   type ComparativeRules[T] = {
     def lte: Option[T]
@@ -24,10 +24,9 @@ object NumericRulesGen {
     with MembershipRulesGen.MembershipRules[T]
 
   def numericRules[T: Ordering: Show: ClassTag](
-      scalaType: String,
       rules: NumericRules[T]
   ): Seq[Rule] =
-    comparativeRules(scalaType, rules) ++ MembershipRulesGen.membershipRules[T](
+    comparativeRules(rules) ++ MembershipRulesGen.membershipRules[T](
       rules
     )
 
@@ -39,13 +38,12 @@ object NumericRulesGen {
     }
 
   // constant definition
-  private[validate] val NV = "scalapb.validate.NumericValidation"
+  private[validate] val CV = "scalapb.validate.ComparativeValidation"
 
-  def constRule(scalaType: String, const: String) =
-    basic(s"$NV.constant[$scalaType]", const)
+  def constRule(const: String) =
+    basic(s"$CV.constant", const)
 
   def comparativeRules[T: Ordering: ClassTag](
-      scalaType: String,
       rules: ComparativeRules[T]
   )(implicit show: Show[T]): Seq[Rule] = {
     if (rules.gt.isDefined && rules.gte.isDefined)
@@ -64,7 +62,7 @@ object NumericRulesGen {
     val maybeLtVal = rules.lt.orElse(rules.lte)
 
     val constRules = Seq(
-      rules.const.map(v => constRule(scalaType, show(v)))
+      rules.const.map(v => constRule(show(v)))
     ).flatten
 
     val rangeRules = (maybeGtVal, maybeLtVal) match {
@@ -72,7 +70,7 @@ object NumericRulesGen {
         val ex = if (ltVal < gtVal) "Ex" else ""
         Seq(
           basic(
-            s"$NV.range$gtType$ltType$ex[$scalaType]",
+            s"$CV.range$gtType$ltType$ex",
             Seq(
               show(gtVal),
               show(ltVal)
@@ -81,13 +79,13 @@ object NumericRulesGen {
         )
       case _ =>
         Seq(
-          rules.gt.map(v => basic(s"$NV.greaterThan[$scalaType]", show(v))),
+          rules.gt.map(v => basic(s"$CV.greaterThan", show(v))),
           rules.gte.map(v =>
-            basic(s"$NV.greaterThanOrEqual[$scalaType]", show(v))
+            basic(s"$CV.greaterThanOrEqual", show(v))
           ),
           rules.lt
-            .map(v => basic(s"$NV.lessThan[$scalaType]", show(v))),
-          rules.lte.map(v => basic(s"$NV.lessThanOrEqual[$scalaType]", show(v)))
+            .map(v => basic(s"$CV.lessThan", show(v))),
+          rules.lte.map(v => basic(s"$CV.lessThanOrEqual", show(v)))
         ).flatten
     }
 

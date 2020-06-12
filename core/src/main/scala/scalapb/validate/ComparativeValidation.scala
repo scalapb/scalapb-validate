@@ -5,7 +5,7 @@ import math.Ordering.Implicits._
 import com.google.protobuf.timestamp.Timestamp
 import com.google.protobuf.duration.Duration
 
-object NumericValidation {
+object ComparativeValidation {
   implicit val timestampOrdering = new Ordering[Timestamp] {
     def compare(x: Timestamp, y: Timestamp): Int = {
       val o1 = java.lang.Long.compare(x.seconds, y.seconds)
