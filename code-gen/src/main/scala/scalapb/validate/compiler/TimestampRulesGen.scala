@@ -18,16 +18,20 @@ object TimestampRulesGen {
         )
       },
       Rule.ifSet(rules.getLtNow)(
-        Rule.basic(
-          NumericRulesGen.NV + ".lessThan",
-          s"$TV.currentTimestamp()"
-        )
+        Rule
+          .basic(
+            NumericRulesGen.NV + ".lessThan",
+            s"$TV.currentTimestamp()"
+          )
+          .withImport(NumericRulesGen.TimestampOrdering)
       ),
       Rule.ifSet(rules.getGtNow)(
-        Rule.basic(
-          NumericRulesGen.NV + ".greaterThan",
-          s"$TV.currentTimestamp()"
-        )
+        Rule
+          .basic(
+            NumericRulesGen.NV + ".greaterThan",
+            s"$TV.currentTimestamp()"
+          )
+          .withImport(NumericRulesGen.TimestampOrdering)
       ),
       rules.within.map { d =>
         Rule.java(

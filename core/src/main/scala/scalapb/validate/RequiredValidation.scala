@@ -8,5 +8,8 @@ object RequiredValidation {
     Result(value.nonEmpty, new ValidationException(name, "None", "is required"))
 
   def apply[T](name: String, value: GeneratedOneof): Result =
-    Result(value.isDefined, new ValidationException(name, "Empty", "is required"))
+    Result(
+      value.isDefined,
+      new ValidationException(name, "Empty", "is required")
+    )
 }

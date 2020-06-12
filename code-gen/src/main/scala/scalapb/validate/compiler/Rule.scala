@@ -5,31 +5,34 @@ import scalapb.compiler.Expression
 import scalapb.compiler.Identity
 import scalapb.compiler.ExpressionBuilder
 import scalapb.compiler.EnclosingType
+import scalapb.compiler.FunctionApplication
 
-sealed trait Rule {
-  def render(descriptor: FieldDescriptor, input: String): String
-}
-
-case class BasicRule(funcName: String, args: Seq[String], transform: Expression)
-    extends Rule {
+case class Rule(
+    funcName: String,
+    args: Seq[String],
+    needsName: Boolean,
+    inputTransform: Expression,
+    outputTranform: Expression,
+    imports: Seq[String]
+) {
   self =>
   def render(descriptor: FieldDescriptor, input: String): String = {
-    val e = ExpressionBuilder.run(transform)(input, EnclosingType.None, false)
-    val base = s"""$funcName("${descriptor.getName()}", ${e}"""
-    if (args.isEmpty) base + ")"
-    else base + args.mkString(", ", ", ", ")")
+    val e =
+      ExpressionBuilder.run(inputTransform)(input, EnclosingType.None, false)
+    val maybeName = if (needsName) s""""${descriptor.getName()}", """ else ""
+    val base = s"""$funcName(${maybeName}${e}"""
+    val out =
+      if (args.isEmpty) base + ")"
+      else base + args.mkString(", ", ", ", ")")
+    ExpressionBuilder.run(outputTranform)(out, EnclosingType.None, false)
   }
 
   def wrapJava: Rule =
-    new Rule {
-      def render(descriptor: FieldDescriptor, input: String): String =
-        s"scalapb.validate.Result.run(${self.render(descriptor, input)})"
-    }
-}
+    copy(outputTranform =
+      FunctionApplication("scalapb.validate.Result.run") andThen outputTranform
+    )
 
-case class MessageValidateRule(validatorName: String) extends Rule {
-  def render(descriptor: FieldDescriptor, input: String): String =
-    s"$validatorName.validate($input)"
+  def withImport(name: String) = copy(imports = imports :+ name)
 }
 
 object Rule {
@@ -37,13 +40,13 @@ object Rule {
       funcName: String,
       args: Seq[String],
       transform: Expression = Identity
-  ): BasicRule =
-    BasicRule(funcName, args, transform)
+  ): Rule =
+    Rule(funcName, args, true, transform, Identity, Nil)
 
-  def basic(funcName: String, arg1: String): BasicRule =
+  def basic(funcName: String, arg1: String): Rule =
     basic(funcName, Seq(arg1))
 
-  def basic(funcName: String): BasicRule =
+  def basic(funcName: String): Rule =
     basic(funcName, Seq.empty)
 
   def java(funcName: String, transform: Expression, args: String*): Rule =
@@ -53,7 +56,7 @@ object Rule {
     basic(funcName, args, Identity).wrapJava
 
   def messageValidate(validator: String): Rule =
-    MessageValidateRule(validator)
+    Rule(s"$validator.validate", Seq.empty, false, Identity, Identity, Nil)
 
   def ifSet[T](cond: => Boolean)(value: => T): Option[T] =
     if (cond) Some(value) else None

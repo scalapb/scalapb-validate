@@ -6,8 +6,11 @@ import com.google.protobuf.timestamp.Timestamp
 import Rule.basic
 import com.google.protobuf.duration.Duration
 import scala.reflect.ClassTag
+import scala.reflect.classTag
 
 object NumericRulesGen {
+  val TimestampOrdering = "scalapb.validate.NumericValidation.timestampOrdering"
+  val DurationOrdering = "scalapb.validate.NumericValidation.durationOrdering"
 
   type ComparativeRules[T] = {
     def lte: Option[T]
@@ -28,13 +31,20 @@ object NumericRulesGen {
       rules
     )
 
+  def additionalImports(className: String): Seq[String] =
+    className match {
+      case "com.google.protobuf.timestamp.Timestamp" => Seq(TimestampOrdering)
+      case "com.google.protobuf.duration.Duration"   => Seq(DurationOrdering)
+      case _                                         => Nil
+    }
+
   // constant definition
   private[validate] val NV = "scalapb.validate.NumericValidation"
 
   def constRule(scalaType: String, const: String) =
     basic(s"$NV.constant[$scalaType]", const)
 
-  def comparativeRules[T: Ordering](
+  def comparativeRules[T: Ordering: ClassTag](
       scalaType: String,
       rules: ComparativeRules[T]
   )(implicit show: Show[T]): Seq[Rule] = {
@@ -81,7 +91,10 @@ object NumericRulesGen {
         ).flatten
     }
 
-    rangeRules ++ constRules
+    val imports = additionalImports(classTag[T].runtimeClass.getName)
+    (rangeRules ++ constRules).map(rule =>
+      imports.foldLeft[Rule](rule)(_.withImport(_))
+    )
   }
 
   implicit val timestampOrdering = new Ordering[Timestamp] {

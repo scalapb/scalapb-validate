@@ -71,10 +71,15 @@ class MessagePrinter(
   private val Validator = "scalapb.validate.Validator"
   private val Result = "scalapb.validate.Result"
 
+  val fieldRules: Seq[RenderedResult] =
+    message.getFields().asScala.toSeq.flatMap(renderedRulesForField(_))
+
   def printValidate(fp: FunctionalPrinter): FunctionalPrinter = {
+    val fieldRulesGroup = fieldRules.map(formatRenderedResult(_))
+
     val ruleGroups =
-      message.getFields.asScala.toSeq.flatMap(formattedRulesForField) ++
-      message.getOneofs.asScala.toSeq.flatMap(formattedRulesForOneofs)
+      fieldRulesGroup ++
+        message.getOneofs.asScala.toSeq.flatMap(formattedRulesForOneofs)
     val isDisabled = message.getOptions().getExtension(Validate.disabled)
     fp.add(
         s"def validate(input: ${message.scalaType.fullName}): $Result ="
@@ -104,31 +109,38 @@ class MessagePrinter(
 
   def content: String = {
     val fp = new FunctionalPrinter()
+    val imports = fieldRules.flatMap(_.imports).distinct
     fp.add(s"package ${message.getFile.scalaPackage.fullName}", "")
       .add()
-      .add(
-        "import scalapb.validate.NumericValidation.{durationOrdering, timestampOrdering}"
-      )
+      .seq(imports.map(i => s"import $i"))
       .call(printObject)
       .result()
   }
 
-  sealed trait RenderedResult
+  sealed trait RenderedResult {
+    def imports: Seq[String]
+  }
 
   case class SingularResult(fd: FieldDescriptor, accessor: String, line: Rule)
-      extends RenderedResult
+      extends RenderedResult {
+    def imports = line.imports
+  }
 
   case class OptionalResult(
       fd: FieldDescriptor,
       accessor: String,
       lines: Seq[Rule]
-  ) extends RenderedResult
+  ) extends RenderedResult {
+    def imports = lines.flatMap(_.imports)
+  }
 
   case class RepeatedResult(
       fd: FieldDescriptor,
       accessor: String,
       lines: Seq[Rule]
-  ) extends RenderedResult
+  ) extends RenderedResult {
+    def imports = lines.flatMap(_.imports)
+  }
 
   def repeatedRules(
       fd: FieldDescriptor,
@@ -141,7 +153,7 @@ class MessagePrinter(
       fd.isMessage &&
         !rulesProto.getMessage.getSkip &&
         !fd.getMessageType.getFullName.startsWith("google.protobuf")
-    )(MessageValidateRule(validatorName(fd.getMessageType()).fullName))
+    )(Rule.messageValidate(validatorName(fd.getMessageType()).fullName))
 
     val allRules = itemRules ++ messageRules
 
@@ -222,10 +234,10 @@ class MessagePrinter(
     maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules ++ maybeRequired
   }
 
-  def formattedRulesForField(
-      fd: FieldDescriptor
-  ): Seq[Seq[String]] =
-    renderedRulesForField(fd).map {
+  def formatRenderedResult(
+      result: RenderedResult
+  ): Seq[String] =
+    result match {
       case SingularResult(fd, accessor, line) =>
         Seq(line.render(fd, accessor))
       case OptionalResult(fd, accessor, lines0) =>
@@ -242,7 +254,8 @@ class MessagePrinter(
 
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
     val isRequired = oneof.getOptions().getExtension(Validate.required)
-    if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof.getName()}", input.${oneof.scalaName.name})"""))
+    if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof
+      .getName()}", input.${oneof.scalaName.name})"""))
     else Seq.empty
   }
 
