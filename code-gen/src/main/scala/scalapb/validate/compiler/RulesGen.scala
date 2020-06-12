@@ -72,4 +72,12 @@ object RulesGen {
 
       case _ => Seq.empty
     }
+
+  def isRequired(rules: FieldRules): Boolean =
+    rules.getMessage.getRequired || (rules.`type` match {
+      case Type.Timestamp(v) => v.getRequired
+      case Type.Duration(v)  => v.getRequired
+      case Type.Any(v)       => v.getRequired
+      case _                 => false
+    })
 }

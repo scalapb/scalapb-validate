@@ -13,7 +13,7 @@ object StringRulesGen {
 
   // Copied from ScalaPB's ProtobufGenerator
   // TODO: move to common place
-  private def quoted(raw: String): String =
+  private[validate] def quoted(raw: String): String =
     raw
       .map {
         case '\b'                      => "\\b"
@@ -60,5 +60,5 @@ object StringRulesGen {
       ifSet(rules.getUri)(Rule.java(s"$SV.uri")),
       ifSet(rules.getUriRef)(Rule.java(s"$SV.uriRef")),
       ifSet(rules.getUuid)(Rule.java(s"$SV.uuid"))
-    ).flatten
+    ).flatten ++ NumericRulesGen.membershipRules(rules)
 }

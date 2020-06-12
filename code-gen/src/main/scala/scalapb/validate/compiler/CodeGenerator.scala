@@ -108,13 +108,20 @@ class MessagePrinter(
 
   sealed trait RenderedResult
 
-  case class SingularResult(line: String) extends RenderedResult
-
-  case class OptionalResult(accessor: String, lines: Seq[String])
+  case class SingularResult(fd: FieldDescriptor, accessor: String, line: Rule)
       extends RenderedResult
 
-  case class RepeatedResult(accessor: String, lines: Seq[String])
-      extends RenderedResult
+  case class OptionalResult(
+      fd: FieldDescriptor,
+      accessor: String,
+      lines: Seq[Rule]
+  ) extends RenderedResult
+
+  case class RepeatedResult(
+      fd: FieldDescriptor,
+      accessor: String,
+      lines: Seq[Rule]
+  ) extends RenderedResult
 
   def renderedRulesForField(fd: FieldDescriptor): Seq[RenderedResult] = {
     val rulesProto =
@@ -130,8 +137,9 @@ class MessagePrinter(
       if ((fd.isInOneof || fd.supportsPresence) && rules.nonEmpty)
         Seq(
           OptionalResult(
+            fd,
             accessor,
-            rules.map(r => "  " + r.render(fd, "_value"))
+            rules
           )
         )
       else Seq.empty
@@ -150,52 +158,65 @@ class MessagePrinter(
       if (allRules.nonEmpty)
         Seq(
           RepeatedResult(
+            fd,
             accessor,
-            allRules.map(r => "  " + r.render(fd, "_value"))
+            allRules
           )
         )
       else Seq.empty
     } else Seq.empty
 
     val messageRules = if (fd.isMessage) {
+      val maybeRequired: Option[SingularResult] = None
+      /*
       val maybeRequired =
         Rule.ifSet(fd.supportsPresence && rulesProto.getMessage.getRequired)(
-          SingularResult(s"""scalapb.validate.RequiredValidation("${fd
+          SingularResult(
+            fd,
+            s"""scalapb.validate.RequiredValidation("${fd
             .getName()}", ${accessor})""")
         )
+       */
 
       val maybeNested = Rule.ifSet(
         fd.supportsPresence && !rulesProto.getMessage.getSkip &&
           !fd.getMessageType.getFullName.startsWith("google.protobuf")
       )(
         OptionalResult(
+          fd,
           accessor,
-          Seq(validatorName(fd.getMessageType).fullName + ".validate(_value)")
+          Seq(Rule.messageValidate(validatorName(fd.getMessageType).fullName))
         )
       )
 
       maybeRequired ++ maybeNested
     } else Seq.empty
 
+    val maybeRequired = Rule.ifSet(RulesGen.isRequired(rulesProto))(
+      SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
+    )
+
     val maybeSingular =
       if (!fd.supportsPresence && !fd.isInOneof && rules.nonEmpty)
-        rules.map(r => SingularResult(r.render(fd, accessor)))
+        rules.map(r => SingularResult(fd, accessor, r))
       else Seq.empty
 
-    maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules
+    maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules ++ maybeRequired
   }
 
   def formattedRulesForField(
       fd: FieldDescriptor
   ): Seq[Seq[String]] =
     renderedRulesForField(fd).map {
-      case SingularResult(line) =>
-        Seq(line)
-      case OptionalResult(accessor, lines) =>
+      case SingularResult(fd, accessor, line) =>
+        Seq(line.render(fd, accessor))
+      case OptionalResult(fd, accessor, lines0) =>
+        val lines = lines0.map(_.render(fd, "_value"))
         Seq(s"scalapb.validate.Result.optional($accessor) { _value =>") ++
           lines.dropRight(1).map(l => l + " &&") ++
           Seq(lines.last, "}")
-      case RepeatedResult(accessor, lines) =>
+      case RepeatedResult(fd, accessor, lines0) =>
+        val lines = lines0.map(_.render(fd, "_value"))
         Seq(s"scalapb.validate.Result.repeated($accessor) { _value =>") ++
           lines.dropRight(1).map(l => l + " &&") ++
           Seq(lines.last, "}")

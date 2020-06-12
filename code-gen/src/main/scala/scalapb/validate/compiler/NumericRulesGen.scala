@@ -5,6 +5,8 @@ import scala.math.Ordering.Implicits._
 import com.google.protobuf.timestamp.Timestamp
 import Rule.basic
 import com.google.protobuf.duration.Duration
+import scala.reflect.classTag
+import scala.reflect.ClassTag
 
 object NumericRulesGen {
 
@@ -23,11 +25,11 @@ object NumericRulesGen {
 
   type NumericRules[T] = ComparativeRules[T] with MembershipRules[T]
 
-  def numericRules[T: Numeric](
+  def numericRules[T: Numeric: Show: ClassTag](
       scalaType: String,
       rules: NumericRules[T]
   ): Seq[Rule] =
-    comparativeRules(scalaType, rules) ++ membershipRules(scalaType, rules)
+    comparativeRules(scalaType, rules) ++ membershipRules[T](rules)
 
   // constant definition
   private val NV = "scalapb.validate.NumericValidator"
@@ -35,19 +37,27 @@ object NumericRulesGen {
   def constRule(scalaType: String, const: String) =
     basic(s"$NV.constant[$scalaType]", const)
 
-  def show[T](scalaType: String, v: T) =
-    if (scalaType == "scala.Float") s"${v}f"
-    else if (scalaType == "scala.Long") s"${v}L"
-    else if (scalaType == "com.google.protobuf.timestamp.Timestamp")
-      s"com.google.protobuf.timestamp.Timestamp.of(${v.asInstanceOf[Timestamp].seconds}, ${v.asInstanceOf[Timestamp].nanos})"
-    else if (scalaType == "com.google.protobuf.duration.Duration")
-      s"com.google.protobuf.duration.Duration.of(${v.asInstanceOf[Duration].seconds}, ${v.asInstanceOf[Duration].nanos})"
-    else v.toString()
+  trait Show[T] {
+    def apply(v: T): String
+  }
+
+  object Show {
+    implicit val showFloat: Show[Float] = (v: Float) => s"${v}f"
+    implicit val showDouble: Show[Double] = (v: Double) => s"${v}"
+    implicit val showInt: Show[Int] = (v: Int) => v.toString()
+    implicit val showLong: Show[Long] = (v: Long) => s"${v}L"
+    implicit val showString: Show[String] = (v: String) =>
+      StringRulesGen.quoted(v)
+    implicit val showTimestamp: Show[Timestamp] = (v: Timestamp) =>
+      s"com.google.protobuf.timestamp.Timestamp.of(${v.seconds}L, ${v.nanos})"
+    implicit val showDuration: Show[Duration] = (v: Duration) =>
+      s"com.google.protobuf.duration.Duration.of(${v.seconds}L, ${v.nanos})"
+  }
 
   def comparativeRules[T: Ordering](
       scalaType: String,
       rules: ComparativeRules[T]
-  ): Seq[Rule] = {
+  )(implicit show: Show[T]): Seq[Rule] = {
     if (rules.gt.isDefined && rules.gte.isDefined)
       new RuntimeException("Error: both gt and gte were specified.")
     if (rules.lt.isDefined && rules.lte.isDefined)
@@ -64,7 +74,7 @@ object NumericRulesGen {
     val maybeLtVal = rules.lt.orElse(rules.lte)
 
     val constRules = Seq(
-      rules.const.map(v => constRule(scalaType, show(scalaType, v)))
+      rules.const.map(v => constRule(scalaType, show(v)))
     ).flatten
 
     val rangeRules = (maybeGtVal, maybeLtVal) match {
@@ -73,48 +83,57 @@ object NumericRulesGen {
         Seq(
           basic(
             s"$NV.range$gtType$ltType$ex[$scalaType]",
-            show(scalaType, gtVal),
-            show(scalaType, ltVal)
+            show(gtVal),
+            show(ltVal)
           )
         )
       case _ =>
         Seq(
-          rules.gt.map(v =>
-            basic(s"$NV.greaterThan[$scalaType]", show(scalaType, v))
-          ),
+          rules.gt.map(v => basic(s"$NV.greaterThan[$scalaType]", show(v))),
           rules.gte.map(v =>
-            basic(s"$NV.greaterThanOrEqual[$scalaType]", show(scalaType, v))
+            basic(s"$NV.greaterThanOrEqual[$scalaType]", show(v))
           ),
           rules.lt
-            .map(v => basic(s"$NV.lessThan[$scalaType]", show(scalaType, v))),
-          rules.lte.map(v =>
-            basic(s"$NV.lessThanOrEqual[$scalaType]", show(scalaType, v))
-          )
+            .map(v => basic(s"$NV.lessThan[$scalaType]", show(v))),
+          rules.lte.map(v => basic(s"$NV.lessThanOrEqual[$scalaType]", show(v)))
         ).flatten
     }
 
     rangeRules ++ constRules
   }
 
-  def membershipRules[T](scalaType: String, rules: MembershipRules[T]) =
+  def membershipRules[T: ClassTag](
+      rules: MembershipRules[T]
+  )(implicit show: Show[T]) = {
+    val runtimeClass = classTag[T].runtimeClass
+    val className =
+      if (runtimeClass.isPrimitive()) runtimeClass.getName() match {
+        case "int"    => "Int"
+        case "long"   => "Long"
+        case "float"  => "Float"
+        case "double" => "Double"
+      }
+      else runtimeClass.getName()
+
     Seq(
       if (rules.in.nonEmpty)
         Some(
           basic(
-            s"$NV.in[$scalaType]",
-            rules.in.map(v => show(scalaType, v)).mkString("Seq(", ", ", ")")
+            s"$NV.in[$className]",
+            rules.in.map(v => show(v)).mkString("Seq(", ", ", ")")
           )
         )
       else None,
       if (rules.notIn.nonEmpty)
         Some(
           basic(
-            s"$NV.notIn[$scalaType]",
-            rules.notIn.map(v => show(scalaType, v)).mkString("Seq(", ", ", ")")
+            s"$NV.notIn[$className]",
+            rules.notIn.map(v => show(v)).mkString("Seq(", ", ", ")")
           )
         )
       else None
     ).flatten
+  }
 
   implicit val timestampOrdering = new Ordering[Timestamp] {
     def compare(x: Timestamp, y: Timestamp): Int = {
