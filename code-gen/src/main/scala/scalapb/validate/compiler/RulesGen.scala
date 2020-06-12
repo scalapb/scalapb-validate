@@ -72,7 +72,10 @@ object RulesGen {
         RepeatedRulesGen.repeatedRules(repeatedRules)
 
       case Type.Any(anyRules) =>
-        NumericRulesGen.membershipRules(anyRules, MethodApplication("typeUrl"))
+        MembershipRulesGen.membershipRules(
+          anyRules,
+          MethodApplication("typeUrl")
+        )
 
       case _ => Seq.empty
     }

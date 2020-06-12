@@ -60,5 +60,5 @@ object StringRulesGen {
       ifSet(rules.getUri)(Rule.java(s"$SV.uri")),
       ifSet(rules.getUriRef)(Rule.java(s"$SV.uriRef")),
       ifSet(rules.getUuid)(Rule.java(s"$SV.uuid"))
-    ).flatten ++ NumericRulesGen.membershipRules(rules)
+    ).flatten ++ MembershipRulesGen.membershipRules(rules)
 }

@@ -5,10 +5,7 @@ import scala.math.Ordering.Implicits._
 import com.google.protobuf.timestamp.Timestamp
 import Rule.basic
 import com.google.protobuf.duration.Duration
-import scala.reflect.classTag
 import scala.reflect.ClassTag
-import scalapb.compiler.Identity
-import scalapb.compiler.Expression
 
 object NumericRulesGen {
 
@@ -20,41 +17,22 @@ object NumericRulesGen {
     def const: Option[T]
   }
 
-  type MembershipRules[T] = {
-    def in: Seq[T]
-    def notIn: Seq[T]
-  }
-
-  type NumericRules[T] = ComparativeRules[T] with MembershipRules[T]
+  type NumericRules[T] = ComparativeRules[T]
+    with MembershipRulesGen.MembershipRules[T]
 
   def numericRules[T: Ordering: Show: ClassTag](
       scalaType: String,
       rules: NumericRules[T]
   ): Seq[Rule] =
-    comparativeRules(scalaType, rules) ++ membershipRules[T](rules)
+    comparativeRules(scalaType, rules) ++ MembershipRulesGen.membershipRules[T](
+      rules
+    )
 
   // constant definition
-  private val NV = "scalapb.validate.NumericValidator"
+  private val NV = "scalapb.validate.NumericValidation"
 
   def constRule(scalaType: String, const: String) =
     basic(s"$NV.constant[$scalaType]", const)
-
-  trait Show[T] {
-    def apply(v: T): String
-  }
-
-  object Show {
-    implicit val showFloat: Show[Float] = (v: Float) => s"${v}f"
-    implicit val showDouble: Show[Double] = (v: Double) => s"${v}"
-    implicit val showInt: Show[Int] = (v: Int) => v.toString()
-    implicit val showLong: Show[Long] = (v: Long) => s"${v}L"
-    implicit val showString: Show[String] = (v: String) =>
-      StringRulesGen.quoted(v)
-    implicit val showTimestamp: Show[Timestamp] = (v: Timestamp) =>
-      s"com.google.protobuf.timestamp.Timestamp.of(${v.seconds}L, ${v.nanos})"
-    implicit val showDuration: Show[Duration] = (v: Duration) =>
-      s"com.google.protobuf.duration.Duration.of(${v.seconds}L, ${v.nanos})"
-  }
 
   def comparativeRules[T: Ordering](
       scalaType: String,
@@ -104,42 +82,6 @@ object NumericRulesGen {
     }
 
     rangeRules ++ constRules
-  }
-
-  def membershipRules[T: ClassTag](
-      rules: MembershipRules[T],
-      transform: Expression = Identity
-  )(implicit show: Show[T]) = {
-    val runtimeClass = classTag[T].runtimeClass
-    val className =
-      if (runtimeClass.isPrimitive()) runtimeClass.getName() match {
-        case "int"    => "Int"
-        case "long"   => "Long"
-        case "float"  => "Float"
-        case "double" => "Double"
-      }
-      else runtimeClass.getName()
-
-    Seq(
-      if (rules.in.nonEmpty)
-        Some(
-          basic(
-            s"$NV.in[$className]",
-            Seq(rules.in.map(v => show(v)).mkString("Seq(", ", ", ")")),
-            transform
-          )
-        )
-      else None,
-      if (rules.notIn.nonEmpty)
-        Some(
-          basic(
-            s"$NV.notIn[$className]",
-            Seq(rules.notIn.map(v => show(v)).mkString("Seq(", ", ", ")")),
-            transform
-          )
-        )
-      else None
-    ).flatten
   }
 
   implicit val timestampOrdering = new Ordering[Timestamp] {

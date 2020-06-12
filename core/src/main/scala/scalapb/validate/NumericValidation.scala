@@ -5,7 +5,7 @@ import math.Ordering.Implicits._
 import com.google.protobuf.timestamp.Timestamp
 import com.google.protobuf.duration.Duration
 
-object NumericValidator {
+object NumericValidation {
   implicit val timestampOrdering = new Ordering[Timestamp] {
     def compare(x: Timestamp, y: Timestamp): Int = {
       val o1 = java.lang.Long.compare(x.seconds, y.seconds)
@@ -51,26 +51,6 @@ object NumericValidator {
         name,
         v,
         s"$v must be less than or equal to $limit"
-      )
-    )
-
-  def in[T](name: String, v: T, values: Seq[T]) =
-    Result(
-      values.contains(v),
-      new ValidationException(
-        name,
-        v,
-        s"""$v must be in ${values.mkString("[", ", ", "]")}""""
-      )
-    )
-
-  def notIn[T](name: String, v: T, values: Seq[T]) =
-    Result(
-      !values.contains(v),
-      new ValidationException(
-        name,
-        v,
-        s"""$v must not be in ${values.mkString("[", ", ", "]")}""""
       )
     )
 

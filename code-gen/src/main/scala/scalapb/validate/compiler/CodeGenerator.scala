@@ -100,7 +100,7 @@ class MessagePrinter(
     fp.add(s"package ${message.getFile.scalaPackage.fullName}", "")
       .add()
       .add(
-        "import scalapb.validate.NumericValidator.{durationOrdering, timestampOrdering}"
+        "import scalapb.validate.NumericValidation.{durationOrdering, timestampOrdering}"
       )
       .call(printObject)
       .result()
@@ -168,15 +168,6 @@ class MessagePrinter(
 
     val messageRules = if (fd.isMessage) {
       val maybeRequired: Option[SingularResult] = None
-      /*
-      val maybeRequired =
-        Rule.ifSet(fd.supportsPresence && rulesProto.getMessage.getRequired)(
-          SingularResult(
-            fd,
-            s"""scalapb.validate.RequiredValidation("${fd
-            .getName()}", ${accessor})""")
-        )
-       */
 
       val maybeNested = Rule.ifSet(
         fd.supportsPresence && !rulesProto.getMessage.getSkip &&
