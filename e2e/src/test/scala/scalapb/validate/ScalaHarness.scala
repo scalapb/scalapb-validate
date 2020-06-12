@@ -28,6 +28,12 @@ import scala.sys.process.Process
 import scala.jdk.CollectionConverters._
 import java.nio.file.attribute.PosixFilePermission
 import io.undertow.Undertow
+import io.undertow.server.HttpServerExchange
+import scala.concurrent.ExecutionContext.Implicits.global
+import io.undertow.server.handlers.BlockingHandler
+import java.net.Socket
+import java.net.ConnectException
+import scala.annotation.tailrec
 
 /**
   * How this works?
@@ -47,7 +53,7 @@ import io.undertow.Undertow
   * the same protocol over HTTP. The executor is provided with a shell script that calls `curl`
   * to connect to the server.
   */
-object ScalaHarness extends cask.MainRoutes {
+object ScalaHarness {
   val files = Seq(
     BoolProto,
     BytesProto,
@@ -83,9 +89,8 @@ object ScalaHarness extends cask.MainRoutes {
       (cmp.scalaDescriptor.fullName, cmp)
     }.toMap
 
-  @cask.post("/")
-  def processRequest(req: cask.Request) = {
-    val testCase = TestCase.parseFrom(req.readAllBytes())
+  def processRequest(exchange: HttpServerExchange): Unit = {
+    val testCase = TestCase.parseFrom(exchange.getInputStream())
     val message = testCase.getMessage.typeUrl.substring(20)
     val cmp = typeMap.find(_._1 == message).get._2
     val klass = Class.forName(
@@ -107,10 +112,10 @@ object ScalaHarness extends cask.MainRoutes {
           allowFailure = allowFailure
         )
     }
-    result.toByteArray
+    exchange
+      .getResponseSender()
+      .send(result.toByteString.asReadOnlyByteBuffer())
   }
-
-  initialize()
 
   def createScript(port: Int): Path = {
     val fileName = Files.createTempFile("spv-", ".sh")
@@ -130,22 +135,35 @@ object ScalaHarness extends cask.MainRoutes {
     fileName
   }
 
-  override val port = {
+  val port = {
     val ss = new ServerSocket(0)
     try ss.getLocalPort()
     finally ss.close()
   }
 
-  override def main(args: Array[String]): Unit = {
+  def waitForServer(port: Int, timeoutMsec: Int): Unit = {
+    var timeLeft = timeoutMsec
+    var done = false
+    while (!done)
+      try {
+        val c = new Socket("localhost", port)
+        c.close()
+        done = true
+      } catch {
+        case _: ConnectException if timeLeft >= 0 =>
+          Thread.sleep(100)
+          timeLeft -= 100
+      }
+  }
+
+  def main(args: Array[String]): Unit = {
     val server = Undertow.builder
-      .addHttpListener(port, host)
-      .setHandler(defaultHandler)
+      .addHttpListener(port, "localhost")
+      .setHandler(new BlockingHandler(processRequest(_)))
       .build
     Future(server.start())
-    // Give the server a chance to start before we start making requests.
-    // TODO: replace this with a more robust check
-    Thread.sleep(100)
     val script = createScript(port)
+    waitForServer(port, 10000)
     val status =
       try Process(
         ".pgv/executor.exe",

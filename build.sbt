@@ -107,8 +107,9 @@ lazy val e2e = project
   .settings(
     skip in publish := true,
     libraryDependencies ++= Seq(
+      "io.undertow" % "undertow-core" % "2.1.3.Final",
+      // "io.undertow" % "undertow-servlet" % "2.1.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
-      "com.lihaoyi" %% "cask" % "0.6.5"
     ),
     Compile / PB.generate := ((Compile / PB.generate) dependsOn (protocGenScalaPbValidateUnix / Compile / assembly)).value,
     PB.targets in Compile := Seq(
