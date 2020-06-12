@@ -103,7 +103,8 @@ class MessagePrinter(
         s"object ${objectName.name} extends $Validator[${message.scalaType.fullName}] {"
       )
       .indented(
-        _.call(printValidate)
+        _.seq(fieldRules.flatMap(_.preambles))
+          .call(printValidate)
       )
       .add("}")
 
@@ -119,11 +120,15 @@ class MessagePrinter(
 
   sealed trait RenderedResult {
     def imports: Seq[String]
+
+    def preambles: Seq[String]
   }
 
   case class SingularResult(fd: FieldDescriptor, accessor: String, line: Rule)
       extends RenderedResult {
     def imports = line.imports
+
+    def preambles = line.preamble
   }
 
   case class OptionalResult(
@@ -132,6 +137,7 @@ class MessagePrinter(
       lines: Seq[Rule]
   ) extends RenderedResult {
     def imports = lines.flatMap(_.imports)
+    def preambles = lines.flatMap(_.preamble)
   }
 
   case class RepeatedResult(
@@ -140,6 +146,7 @@ class MessagePrinter(
       lines: Seq[Rule]
   ) extends RenderedResult {
     def imports = lines.flatMap(_.imports)
+    def preambles = lines.flatMap(_.preamble)
   }
 
   def repeatedRules(
@@ -147,7 +154,7 @@ class MessagePrinter(
       rulesProto: FieldRules,
       accessor: String
   ): Seq[RenderedResult] = {
-    val itemRules = RulesGen.rulesSingle(rulesProto)
+    val itemRules = RulesGen.rulesSingle(fd, rulesProto)
 
     val messageRules = Rule.ifSet(
       fd.isMessage &&
@@ -176,7 +183,7 @@ class MessagePrinter(
       else
         s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName}"
 
-    val rules = RulesGen.rulesSingle(rulesProto)
+    val rules = RulesGen.rulesSingle(fd, rulesProto)
 
     val maybeOpt =
       if ((fd.isInOneof || fd.supportsPresence) && rules.nonEmpty)

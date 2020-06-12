@@ -9,8 +9,10 @@ import scala.reflect.ClassTag
 import scala.reflect.classTag
 
 object ComparativeRulesGen {
-  val TimestampOrdering = "scalapb.validate.ComparativeValidation.timestampOrdering"
-  val DurationOrdering = "scalapb.validate.ComparativeValidation.durationOrdering"
+  val TimestampOrdering =
+    "scalapb.validate.ComparativeValidation.timestampOrdering"
+  val DurationOrdering =
+    "scalapb.validate.ComparativeValidation.durationOrdering"
 
   type ComparativeRules[T] = {
     def lte: Option[T]
@@ -80,9 +82,7 @@ object ComparativeRulesGen {
       case _ =>
         Seq(
           rules.gt.map(v => basic(s"$CV.greaterThan", show(v))),
-          rules.gte.map(v =>
-            basic(s"$CV.greaterThanOrEqual", show(v))
-          ),
+          rules.gte.map(v => basic(s"$CV.greaterThanOrEqual", show(v))),
           rules.lt
             .map(v => basic(s"$CV.lessThan", show(v))),
           rules.lte.map(v => basic(s"$CV.lessThanOrEqual", show(v)))

@@ -6,14 +6,16 @@ import io.envoyproxy.pgv.validate.validate.FieldRules.Type
 import ComparativeRulesGen.timestampOrdering
 import ComparativeRulesGen.durationOrdering
 import scalapb.compiler.MethodApplication
+import com.google.protobuf.Descriptors.FieldDescriptor
 
 object RulesGen {
   def rulesSingle(
+      fd: FieldDescriptor,
       rules: FieldRules
   ): Seq[Rule] =
     rules.`type` match {
       case Type.String(stringRules) =>
-        StringRulesGen.print(stringRules)
+        StringRulesGen.stringRules(fd, stringRules)
 
       case Type.Uint64(numericRules) =>
         ComparativeRulesGen.numericRules(numericRules)
@@ -53,7 +55,7 @@ object RulesGen {
 
       case Type.Timestamp(timestampRules) =>
         ComparativeRulesGen.comparativeRules(timestampRules) ++
-        TimestampRulesGen.timestampRules(timestampRules)
+          TimestampRulesGen.timestampRules(timestampRules)
 
       case Type.Duration(durationRules) =>
         ComparativeRulesGen.numericRules(durationRules)

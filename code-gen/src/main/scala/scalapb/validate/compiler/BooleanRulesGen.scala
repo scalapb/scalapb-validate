@@ -7,8 +7,6 @@ object BooleanRulesGen {
       rules: BoolRules
   ): Seq[Rule] =
     Seq(
-      rules.const.map(v =>
-        ComparativeRulesGen.constRule(v.toString())
-      )
+      rules.const.map(v => ComparativeRulesGen.constRule(v.toString()))
     ).flatten
 }

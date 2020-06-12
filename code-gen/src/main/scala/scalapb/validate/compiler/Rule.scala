@@ -13,7 +13,8 @@ case class Rule(
     needsName: Boolean,
     inputTransform: Expression,
     outputTranform: Expression,
-    imports: Seq[String]
+    imports: Seq[String],
+    preamble: Seq[String]
 ) {
   self =>
   def render(descriptor: FieldDescriptor, input: String): String = {
@@ -33,6 +34,8 @@ case class Rule(
     )
 
   def withImport(name: String) = copy(imports = imports :+ name)
+
+  def withPreamble(lines: String*) = copy(preamble = preamble ++ lines)
 }
 
 object Rule {
@@ -41,7 +44,7 @@ object Rule {
       args: Seq[String],
       transform: Expression = Identity
   ): Rule =
-    Rule(funcName, args, true, transform, Identity, Nil)
+    Rule(funcName, args, true, transform, Identity, Nil, Nil)
 
   def basic(funcName: String, arg1: String): Rule =
     basic(funcName, Seq(arg1))
@@ -56,7 +59,7 @@ object Rule {
     basic(funcName, args, Identity).wrapJava
 
   def messageValidate(validator: String): Rule =
-    Rule(s"$validator.validate", Seq.empty, false, Identity, Identity, Nil)
+    Rule(s"$validator.validate", Seq.empty, false, Identity, Identity, Nil, Nil)
 
   def ifSet[T](cond: => Boolean)(value: => T): Option[T] =
     if (cond) Some(value) else None

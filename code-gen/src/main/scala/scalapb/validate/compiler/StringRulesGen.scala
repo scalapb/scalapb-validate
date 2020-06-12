@@ -2,6 +2,7 @@ package scalapb.validate.compiler
 
 import io.envoyproxy.pgv.validate.validate.StringRules
 import Rule._
+import com.google.protobuf.Descriptors.FieldDescriptor
 
 /**
   * StringRulesGenerator helps generate the validation code for protocol buffer string typed field
@@ -29,7 +30,8 @@ object StringRulesGen {
       }
       .mkString("\"", "", "\"")
 
-  def print(
+  def stringRules(
+      fd: FieldDescriptor,
       rules: StringRules
   ): Seq[Rule] =
     Seq(
@@ -44,13 +46,17 @@ object StringRulesGen {
       rules.const.map(v => Rule.java(s"$CV.constant", quoted(v))),
       rules.prefix.map(v => Rule.java(s"$SV.prefix", quoted(v))),
       rules.suffix.map(v => Rule.java(s"$SV.suffix", quoted(v))),
-      // Need to find way to compile the pattern only once
-      rules.pattern.map(v =>
-        Rule.java(
-          s"$SV.pattern",
-          s"com.google.re2j.Pattern.compile(${quoted(v)})"
-        )
-      ),
+      rules.pattern.map { v =>
+        val pname = s"Pattern_${fd.getName()}"
+        Rule
+          .java(
+            s"$SV.pattern",
+            pname
+          )
+          .withPreamble(
+            s"private val $pname = com.google.re2j.Pattern.compile(${quoted(v)})"
+          )
+      },
       ifSet(rules.getAddress)(Rule.java(s"$SV.address")),
       ifSet(rules.getEmail)(Rule.java(s"$SV.email")),
       ifSet(rules.getHostname)(Rule.java(s"$SV.hostName")),
