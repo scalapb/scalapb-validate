@@ -1,7 +1,6 @@
 name: CI
 
-on:
-  push: {}
+on: [push, pull_request]
 
 jobs:
   build:
@@ -24,7 +23,7 @@ jobs:
 
     - name: Compile and test
       run: |
-        sbt ++$TRAVIS_SCALA_VERSION test "e2e/test:runMain scalapb.validate.ScalaHarness"
+        sbt test "e2e/test:runMain scalapb.validate.ScalaHarness"
 
     - name: Formatting
       run: |
