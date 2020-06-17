@@ -12,7 +12,7 @@ To run this test suite against scalapb-validate:
 
 ## Adding the latest snapshot release to your project
 
-1. Note the latest snapshot version here [https://oss.sonatype.org/content/repositories/snapshots/com/thesamet/scalapb/scalapb-validate-core_2.13/](Sonatype Snapshots).
+1. Note the latest snapshot version on [Sonatype Snapshots](https://oss.sonatype.org/content/repositories/snapshots/com/thesamet/scalapb/scalapb-validate-core_2.13/)
 
    [![Snapshot Artifacts][Badge-SonatypeSnapshots]][Link-SonatypeSnapshots]
 
