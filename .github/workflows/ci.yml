@@ -31,3 +31,8 @@ jobs:
     - name: Formatting
       run: |
         sbt scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+
+    - name: Run example project
+      run: |
+        cd example
+        sbt run
