@@ -1,12 +1,13 @@
 package scalapb.validate.compiler
 
+import com.google.protobuf.Descriptors.FieldDescriptor
 import io.envoyproxy.pgv.validate.validate.FieldRules
 import io.envoyproxy.pgv.validate.validate.FieldRules.Type
-
-import ComparativeRulesGen.timestampOrdering
-import ComparativeRulesGen.durationOrdering
 import scalapb.compiler.MethodApplication
-import com.google.protobuf.Descriptors.FieldDescriptor
+import scalapb.validate.compiler.ComparativeRulesGen.{
+  durationOrdering,
+  timestampOrdering
+}
 
 object RulesGen {
   def rulesSingle(
@@ -16,6 +17,8 @@ object RulesGen {
     rules.`type` match {
       case Type.String(stringRules) =>
         StringRulesGen.stringRules(fd, stringRules)
+
+      case Type.Bytes(bytesRules) => BytesRuleGen.bytesRules(fd, bytesRules)
 
       case Type.Uint64(numericRules) =>
         ComparativeRulesGen.numericRules(numericRules)

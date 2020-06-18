@@ -1,11 +1,10 @@
 package scalapb.validate.compiler
 
-import scala.reflect.ClassTag
-import scala.reflect.classTag
+import scalapb.compiler.{Expression, Identity}
+import scalapb.validate.compiler.Rule._
+
 import scala.language.reflectiveCalls
-import scalapb.compiler.Identity
-import scalapb.compiler.Expression
-import Rule._
+import scala.reflect.{classTag, ClassTag}
 
 object MembershipRulesGen {
   private val MV: String = "scalapb.validate.MembershipValidation"

@@ -2,6 +2,7 @@ package scalapb.validate.compiler
 
 import com.google.protobuf.duration.Duration
 import com.google.protobuf.timestamp.Timestamp
+import com.google.protobuf.ByteString
 
 trait Show[T] {
   def apply(v: T): String
@@ -18,4 +19,6 @@ object Show {
     s"com.google.protobuf.timestamp.Timestamp.of(${v.seconds}L, ${v.nanos})"
   implicit val showDuration: Show[Duration] = (v: Duration) =>
     s"com.google.protobuf.duration.Duration.of(${v.seconds}L, ${v.nanos})"
+  implicit val showByteString: Show[ByteString] = (v: ByteString) =>
+    s"com.google.protobuf.ByteString.copyFrom(${v.toByteArray})"
 }
