@@ -6,3 +6,6 @@ target
 .bloop
 metals.sbt
 examples/project/metals.sbt
+.vscode
+.pgv
+bazelisk

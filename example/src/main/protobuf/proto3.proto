@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package myexample;
+
+import "google/protobuf/wrappers.proto";
+import "validate/validate.proto";
+
+message Person {
+  int32 age = 2 [(validate.rules).int32 = {gte: 18}];
+  google.protobuf.StringValue name = 1 [(validate.rules).message.required=true];
+}

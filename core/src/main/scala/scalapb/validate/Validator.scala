@@ -7,20 +7,33 @@ sealed trait Result {
   def isSuccess: Boolean
   def isFailure: Boolean
   def toFailure: Option[Failure]
+
+  def &&(other: => Result) = if (isSuccess) other else this
 }
 
 object Result {
   def run[T](code: => T): Result =
     (Try[T] {
       code
-    }).toOption match {
-      case None                          => Success
-      case Some(ex: ValidationException) => Failure(ex)
-      case Some(ex) =>
-        throw new RuntimeException(
-          "Unexpected exception. Please report this as a bug"
-        )
-    }
+    }).toEither.fold(
+      {
+        case ex: ValidationException => Failure(ex)
+        case ex: Throwable =>
+          throw new RuntimeException(
+            s"Unexpected exception. Please report this as a bug: ${ex.getMessage()}"
+          )
+      },
+      _ => Success
+    )
+
+  def apply(cond: => Boolean, onError: => ValidationException) =
+    if (cond) Success else Failure(onError)
+
+  def optional[T](value: Option[T])(eval: T => Result): Result =
+    value.fold[Result](Success)(eval)
+
+  def repeated[T](value: Iterable[T])(eval: T => Result) =
+    value.iterator.map(eval).find(_.isFailure).getOrElse(Success)
 }
 
 case object Success extends Result {
@@ -36,5 +49,22 @@ case class Failure(violation: ValidationException) extends Result {
 }
 
 trait Validator[T] {
+  self =>
   def validate(t: T): Result
+
+  def optional: Validator[Option[T]] =
+    new Validator[Option[T]] {
+      def validate(t: Option[T]): Result =
+        t.fold[Result](Success)(self.validate)
+    }
+}
+
+object Validator {
+  def apply[T](
+      cond: T => Boolean,
+      onError: T => ValidationException
+  ): Validator[T] =
+    new Validator[T] {
+      def validate(t: T): Result = if (cond(t)) Success else Failure(onError(t))
+    }
 }
