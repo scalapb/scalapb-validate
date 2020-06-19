@@ -20,5 +20,5 @@ object Show {
   implicit val showDuration: Show[Duration] = (v: Duration) =>
     s"com.google.protobuf.duration.Duration.of(${v.seconds}L, ${v.nanos})"
   implicit val showByteString: Show[ByteString] = (v: ByteString) =>
-    s"com.google.protobuf.ByteString.copyFrom(${v.toByteArray})"
+    s"com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")}))"
 }
