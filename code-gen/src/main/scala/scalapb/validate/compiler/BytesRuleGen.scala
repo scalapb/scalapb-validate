@@ -10,6 +10,12 @@ object BytesRuleGen {
   private val BV: String = "io.envoyproxy.pgv.BytesValidation"
   private val CV: String = "io.envoyproxy.pgv.ConstantValidation"
 
+  def preamble(pname: String, v: ByteString) =
+    s"private val $pname: Array[Byte] = Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")})"
+
+  def preambleByteString(pname: String, v: ByteString) =
+    s"private val $pname: com.google.protobuf.ByteString = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")}))"
+
   def bytesRules(
       fd: FieldDescriptor,
       rules: BytesRules
@@ -24,7 +30,7 @@ object BytesRuleGen {
           Rule
             .java(s"$CV.constant", pname)
             .withPreamble(
-              s"private val $pname = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")}))"
+              preambleByteString(pname, v)
             )
       },
       rules.prefix.map { (v: ByteString) =>
@@ -35,7 +41,7 @@ object BytesRuleGen {
             pname
           )
           .withPreamble(
-            s"private val $pname = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")})).toByteArray"
+            preamble(pname, v)
           )
       },
       rules.suffix.map { v =>
@@ -46,7 +52,7 @@ object BytesRuleGen {
             pname
           )
           .withPreamble(
-            s"private val $pname = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")})).toByteArray"
+            preamble(pname, v)
           )
       },
       rules.pattern.map { v =>
@@ -71,7 +77,7 @@ object BytesRuleGen {
             pname
           )
           .withPreamble(
-            s"private val $pname = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")})).toByteArray"
+            preamble(pname, v)
           )
       }
     ).flatten ++ MembershipRulesGen.membershipRules(rules)
