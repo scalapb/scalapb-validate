@@ -11,6 +11,7 @@ import com.google.protobuf.Descriptors.FieldDescriptor
 object StringRulesGen {
   private val SV: String = "io.envoyproxy.pgv.StringValidation"
   private val CV: String = "io.envoyproxy.pgv.ConstantValidation"
+  private val WRX: String = "scalapb.validate.WellKnownRegex"
 
   // Copied from ScalaPB's ProtobufGenerator
   // TODO: move to common place
@@ -65,6 +66,12 @@ object StringRulesGen {
       ifSet(rules.getIpv6)(Rule.java(s"$SV.ipv6")),
       ifSet(rules.getUri)(Rule.java(s"$SV.uri")),
       ifSet(rules.getUriRef)(Rule.java(s"$SV.uriRef")),
-      ifSet(rules.getUuid)(Rule.java(s"$SV.uuid"))
+      ifSet(rules.getUuid)(Rule.java(s"$SV.uuid")),
+      ifSet(rules.getWellKnownRegex.isHttpHeaderName)(
+        Rule.java(s"$SV.pattern", s"$WRX.HTTP_HEADER_NAME")
+      ),
+      ifSet(rules.getWellKnownRegex.isHttpHeaderValue)(
+        Rule.java(s"$SV.pattern", s"$WRX.HTTP_HEADER_VALUE")
+      )
     ).flatten ++ MembershipRulesGen.membershipRules(rules)
 }
