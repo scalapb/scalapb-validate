@@ -6,7 +6,7 @@ import com.google.protobuf.compiler.PluginProtos.CodeGeneratorResponse
 import io.envoyproxy.pgv.validate.Validate
 import io.envoyproxy.pgv.validate.validate.FieldRules
 import protocbridge.Artifact
-import protocbridge.codegen.{CodeGenApp, CodeGenRequest, CodeGenResponse}
+import protocgen.{CodeGenApp, CodeGenRequest, CodeGenResponse}
 import scalapb.compiler.{
   DescriptorImplicits,
   FunctionalPrinter,
