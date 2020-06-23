@@ -50,6 +50,7 @@ lazy val codeGen = project
   .enablePlugins(BuildInfoPlugin)
   .settings(stdSettings)
   .settings(
+    scalaVersion := Scala212,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
@@ -69,20 +70,18 @@ lazy val protocGenScalaPbValidate =
 lazy val e2e = project
   .in(file("e2e"))
   .dependsOn(core)
+  .enablePlugins(LocalCodeGenPlugin)
   .settings(stdSettings)
   .settings(
     skip in publish := true,
+    codeGenClasspath := (codeGen / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
-    protocGenScalaPbValidate.addDependency,
     PB.targets in Compile := Seq(
-      scalapb.gen(grpc = true) -> (sourceManaged in Compile).value,
-      (
-        protocGenScalaPbValidate.plugin.value,
-        Seq()
-      ) -> (Compile / sourceManaged).value
-    ),
-    Compile / PB.recompile := true // always regenerate protos, not cache
+      scalapb.gen(grpc = true) -> (sourceManaged in Compile).value / "scalapb",
+      genModule("scalapb.validate.compiler.CodeGenerator$") ->
+          (sourceManaged in Compile).value / "validate",
+    )
   )
