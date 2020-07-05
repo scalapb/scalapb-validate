@@ -33,7 +33,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import io.undertow.server.handlers.BlockingHandler
 import java.net.Socket
 import java.net.ConnectException
-import scala.annotation.tailrec
 
 /**
   * How this works?

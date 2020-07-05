@@ -60,11 +60,5 @@ trait Validator[T] {
 }
 
 object Validator {
-  def apply[T](
-      cond: T => Boolean,
-      onError: T => ValidationException
-  ): Validator[T] =
-    new Validator[T] {
-      def validate(t: T): Result = if (cond(t)) Success else Failure(onError(t))
-    }
+  def apply[T: Validator] = implicitly[Validator[T]]
 }

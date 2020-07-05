@@ -77,11 +77,13 @@ lazy val e2e = project
     codeGenClasspath := (codeGen / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
-      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
+      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
+      "org.scalameta" %% "munit" % "0.7.9" % Test
     ),
+    testFrameworks += new TestFramework("munit.Framework"),
     PB.targets in Compile := Seq(
       scalapb.gen(grpc = true) -> (sourceManaged in Compile).value / "scalapb",
       genModule("scalapb.validate.compiler.CodeGenerator$") ->
-          (sourceManaged in Compile).value / "validate",
+          (sourceManaged in Compile).value / "scalapb",
     )
   )

@@ -38,10 +38,10 @@ object CodeGenerator extends CodeGenApp {
         val implicits =
           new DescriptorImplicits(params, request.allProtos)
         CodeGenResponse.succeed(
-          for {
+          (for {
             file <- request.filesToGenerate
             message <- file.getMessageTypes().asScala
-          } yield new MessagePrinter(implicits, message).result()
+          } yield new MessagePrinter(implicits, message).result()).flatten
         )
       case Left(error) =>
         CodeGenResponse.fail(error)
@@ -266,10 +266,16 @@ class MessagePrinter(
     else Seq.empty
   }
 
-  def result(): CodeGeneratorResponse.File = {
-    val b = CodeGeneratorResponse.File.newBuilder()
-    b.setName(scalaFileName)
-    b.setContent(content)
-    b.build()
+  def result(): Seq[CodeGeneratorResponse.File] = {
+    val validationFile =
+      CodeGeneratorResponse.File
+        .newBuilder()
+        .setName(scalaFileName)
+        .setContent(content)
+        .build()
+    val companionInsertion = message.messageCompanionInsertionPoint.withContent(
+      s"implicit val validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
+    )
+    Seq(validationFile, companionInsertion)
   }
 }
