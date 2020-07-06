@@ -8,8 +8,6 @@ ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
 
 ThisBuild / scalaVersion := Scala213
 
-ThisBuild / crossScalaVersions := Nil
-
 skip in publish := true
 
 sonatypeProfileName := "com.thesamet"
