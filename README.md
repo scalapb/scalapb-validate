@@ -26,7 +26,7 @@ To run this test suite against scalapb-validate:
 
    libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.4"
 
-   val validateVersion = "0.0.0+35-3753c2ae-SNAPSHOT"
+   val validateVersion = "0.1.0"
 
    libraryDependencies += "com.thesamet.scalapb" %% "scalapb-validate-codegen" % validateVersion
    ```
