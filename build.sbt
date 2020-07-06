@@ -8,7 +8,7 @@ ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
 
 ThisBuild / scalaVersion := Scala213
 
-ThisBuild / crossScalaVersions := Seq(Scala212, Scala213)
+ThisBuild / crossScalaVersions := Nil
 
 skip in publish := true
 
@@ -39,6 +39,7 @@ lazy val core = project
   .settings(stdSettings)
   .settings(
     name := "scalapb-validate-core",
+    crossScalaVersions := Seq(Scala212, Scala213),
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf"
@@ -51,6 +52,7 @@ lazy val codeGen = project
   .settings(stdSettings)
   .settings(
     scalaVersion := Scala212,
+    crossScalaVersions := Nil,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
@@ -64,7 +66,8 @@ lazy val codeGen = project
 lazy val protocGenScalaPbValidate =
   protocGenProject("protoc-gen-scalapb-validate", codeGen)
     .settings(
-      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
+      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator"),
+      scalaVersion := Scala212
     )
 
 lazy val e2e = project
@@ -74,6 +77,7 @@ lazy val e2e = project
   .settings(stdSettings)
   .settings(
     skip in publish := true,
+    crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGen / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
@@ -84,6 +88,6 @@ lazy val e2e = project
     PB.targets in Compile := Seq(
       scalapb.gen(grpc = true) -> (sourceManaged in Compile).value / "scalapb",
       genModule("scalapb.validate.compiler.CodeGenerator$") ->
-          (sourceManaged in Compile).value / "scalapb",
+        (sourceManaged in Compile).value / "scalapb"
     )
   )
