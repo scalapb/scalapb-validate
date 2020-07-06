@@ -8,7 +8,7 @@ To run this test suite against scalapb-validate:
 
 1. Run `./make_harness.sh`. This will download [bazelisk](https://github.com/bazelbuild/bazelisk), clone PGV, and compile its test executor. It is only needed to be done once, and can take a few minutes to compile.
 
-2. In SBT, run `e2e/test:runMain scalapb.validate.ScalaHarness`.
+2. In SBT, run `e2eJVM2_13/test:runMain scalapb.validate.ScalaHarness`.
 
 ## Adding the latest snapshot release to your project
 
@@ -24,9 +24,9 @@ To run this test suite against scalapb-validate:
 
    addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.34")
 
-   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.0-M2"
+   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.7"
 
-   val validateVersion = "0.1.1"
+   val validateVersion = "0.1.2"
 
    libraryDependencies += "com.thesamet.scalapb" %% "scalapb-validate-codegen" % validateVersion
    ```
