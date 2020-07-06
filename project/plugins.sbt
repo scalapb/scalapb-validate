@@ -1,5 +1,3 @@
-ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
-
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.34")
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.0-M2"
@@ -11,6 +9,8 @@ addSbtPlugin("com.geirsson" % "sbt-ci-release" % "1.5.3")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.9.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.1.0")
+
+addSbtPlugin("com.eed3si9n" % "sbt-projectmatrix" % "0.5.1")
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "1.0.0")
 

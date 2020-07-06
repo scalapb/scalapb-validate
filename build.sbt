@@ -4,10 +4,6 @@ val Scala213 = "2.13.2"
 
 val Scala212 = "2.12.10"
 
-ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
-
-ThisBuild / scalaVersion := Scala213
-
 skip in publish := true
 
 sonatypeProfileName := "com.thesamet"
@@ -32,25 +28,23 @@ inThisBuild(
 
 val pgvVersion = "0.3.0"
 
-lazy val core = project
+lazy val core = projectMatrix
   .in(file("core"))
   .settings(stdSettings)
   .settings(
     name := "scalapb-validate-core",
-    crossScalaVersions := Seq(Scala212, Scala213),
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf"
     )
   )
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
 
-lazy val codeGen = project
+lazy val codeGen = projectMatrix
   .in(file("code-gen"))
   .enablePlugins(BuildInfoPlugin)
   .settings(stdSettings)
   .settings(
-    scalaVersion := Scala212,
-    crossScalaVersions := Nil,
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
@@ -60,15 +54,17 @@ lazy val codeGen = project
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0")
     )
   )
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+
+lazy val codeGenJVM212 = codeGen.jvm(Scala212)
 
 lazy val protocGenScalaPbValidate =
-  protocGenProject("protoc-gen-scalapb-validate", codeGen)
+  protocGenProject("protoc-gen-scalapb-validate", codeGenJVM212)
     .settings(
-      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator"),
-      scalaVersion := Scala212
+      Compile / mainClass := Some("scalapb.validate.compiler.CodeGenerator")
     )
 
-lazy val e2e = project
+lazy val e2e = projectMatrix
   .in(file("e2e"))
   .dependsOn(core)
   .enablePlugins(LocalCodeGenPlugin)
@@ -76,7 +72,7 @@ lazy val e2e = project
   .settings(
     skip in publish := true,
     crossScalaVersions := Seq(Scala212, Scala213),
-    codeGenClasspath := (codeGen / Compile / fullClasspath).value,
+    codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
@@ -89,3 +85,4 @@ lazy val e2e = project
         (sourceManaged in Compile).value / "scalapb"
     )
   )
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
