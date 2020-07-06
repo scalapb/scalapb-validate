@@ -78,6 +78,9 @@ object RulesGen {
       case Type.Map(mapRules) =>
         MapRulesGen.mapRules(mapRules)
 
+      case Type.Enum(enumRules) =>
+        EnumRulesGen.enumRules(enumRules)
+
       case _ => Seq.empty
     }
 
