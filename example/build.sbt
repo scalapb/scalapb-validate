@@ -1,6 +1,6 @@
 name := "validate-example"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.2"
 
 ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
 
