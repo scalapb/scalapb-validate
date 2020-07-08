@@ -13,18 +13,15 @@ sealed trait Result {
 
 object Result {
   def run[T](code: => T): Result =
-    (Try[T] {
-      code
-    }).toEither.fold(
-      {
-        case ex: ValidationException => Failure(ex)
-        case ex: Throwable =>
-          throw new RuntimeException(
-            s"Unexpected exception. Please report this as a bug: ${ex.getMessage()}"
-          )
-      },
-      _ => Success
-    )
+    Try(code) match {
+      case scala.util.Success(_)                      => Success
+      case scala.util.Failure(e: ValidationException) => Failure(e)
+      case scala.util.Failure(ex) =>
+        throw new RuntimeException(
+          s"Unexpected exception. Please report this as a bug: ${ex.getMessage()}",
+          ex
+        )
+    }
 
   def apply(cond: => Boolean, onError: => ValidationException) =
     if (cond) Success else Failure(onError)
