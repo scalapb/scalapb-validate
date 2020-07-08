@@ -8,7 +8,7 @@ sealed trait Result {
   def isFailure: Boolean
   def toFailure: Option[Failure]
 
-  def &&(other: => Result): Result =
+  def &&(other: Result): Result =
     (this, other) match {
       case (Success, Success)              => Success
       case (Success, f: Failure)           => f
