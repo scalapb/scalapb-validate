@@ -102,7 +102,13 @@ object ScalaHarness {
     val inst = testCase.getMessage.unpack(cmp)
     val result = vtor.validate(inst) match {
       case Success => TestResult(valid = true)
-      case Failure(ex) =>
+      case Failure(Nil) => // could be avoided with a NonEmptyList
+        sys.error(
+          "unexpected empty violation list"
+        )
+      case Failure(
+            ex :: _ // ignores multiple violations since pgv only supports one
+          ) =>
         val allowFailure =
           ex.getReason() == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
         TestResult(
