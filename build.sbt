@@ -27,10 +27,15 @@ inThisBuild(
 )
 
 val pgvVersion = "0.3.0"
+val munitSettings = Seq(
+  libraryDependencies += "org.scalameta" %% "munit" % "0.7.9" % Test,
+  testFrameworks += new TestFramework("munit.Framework")
+)
 
 lazy val core = projectMatrix
   .in(file("core"))
   .settings(stdSettings)
+  .settings(munitSettings)
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
@@ -69,16 +74,15 @@ lazy val e2e = projectMatrix
   .dependsOn(core)
   .enablePlugins(LocalCodeGenPlugin)
   .settings(stdSettings)
+  .settings(munitSettings)
   .settings(
     skip in publish := true,
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "io.undertow" % "undertow-core" % "2.1.3.Final",
-      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
-      "org.scalameta" %% "munit" % "0.7.9" % Test
+      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
-    testFrameworks += new TestFramework("munit.Framework"),
     PB.targets in Compile := Seq(
       scalapb.gen(grpc = true) -> (sourceManaged in Compile).value / "scalapb",
       genModule("scalapb.validate.compiler.CodeGenerator$") ->
