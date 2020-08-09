@@ -24,7 +24,7 @@ To run this test suite against scalapb-validate:
 
    addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.34")
 
-   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.7"
+   libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.8"
 
    val validateVersion = "0.1.2"
 
@@ -40,9 +40,6 @@ To run this test suite against scalapb-validate:
      scalapb.validate.gen() -> (sourceManaged in Compile).value / "scalapb"
    )
 
-   libraryDependencies ++= Seq(
-     "com.thesamet.scalapb" %% "scalapb-validate-core" % scalapb.validate.compiler.BuildInfo.version % "protobuf"
-   )
    ```
 
 1. import `validate/validate.proto` in your protobufs and set up validators as described in [protoc-gen-validate documentation](https://github.com/envoyproxy/protoc-gen-validate).
