@@ -1,6 +1,6 @@
 import Settings.stdSettings
 
-val Scala213 = "2.13.2"
+val Scala213 = "2.13.3"
 
 val Scala212 = "2.12.10"
 
@@ -34,6 +34,7 @@ val munitSettings = Seq(
 
 lazy val core = projectMatrix
   .in(file("core"))
+  .defaultAxes()
   .settings(stdSettings)
   .settings(munitSettings)
   .settings(
@@ -47,6 +48,7 @@ lazy val core = projectMatrix
 
 lazy val codeGen = projectMatrix
   .in(file("code-gen"))
+  .defaultAxes()
   .enablePlugins(BuildInfoPlugin)
   .settings(stdSettings)
   .settings(
@@ -71,6 +73,7 @@ lazy val protocGenScalaPbValidate =
 
 lazy val e2e = projectMatrix
   .in(file("e2e"))
+  .defaultAxes()
   .dependsOn(core)
   .enablePlugins(LocalCodeGenPlugin)
   .settings(stdSettings)
