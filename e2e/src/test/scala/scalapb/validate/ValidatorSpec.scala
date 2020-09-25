@@ -1,6 +1,7 @@
 package scalapb.validate
 
 import examplepb.example.Person
+import examplepb2.required.{Person => Person2}
 
 class ValidatorSpec extends munit.FunSuite {
 
@@ -50,5 +51,17 @@ class ValidatorSpec extends munit.FunSuite {
         ),
       ("Person.Location.lat", Double.box(100)) :: Nil
     )
+  }
+
+  // See issue #21
+  test("Required message is validated") {
+    assertFailure(
+      Validator[Person2]
+        .validate(
+          Person2(email = "foo@foo.com", home = Person2.Location(91, 0))
+        ),
+      ("Person.Location.lat", Double.box(91.0)) :: Nil
+    )
+
   }
 }

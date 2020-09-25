@@ -213,7 +213,16 @@ class MessagePrinter(
       else Seq.empty
 
     val messageRules = if (fd.isMessage) {
-      val maybeRequired: Option[SingularResult] = None
+      val maybeRequired: Option[SingularResult] = Rule.ifSet(
+        !fd.supportsPresence && !fd.isRepeated && !fd.isInOneof && !rulesProto.getMessage.getSkip &&
+          !fd.getMessageType.getFullName.startsWith("google.protobuf")
+      )(
+        SingularResult(
+          fd,
+          accessor,
+          Rule.messageValidate(validatorName(fd.getMessageType).fullName)
+        )
+      )
 
       val maybeNested = Rule.ifSet(
         (fd.supportsPresence || fd.isInOneof) && !rulesProto.getMessage.getSkip &&
@@ -250,13 +259,13 @@ class MessagePrinter(
       case OptionalResult(fd, accessor, lines0) =>
         val lines = lines0.map(_.render(fd, "_value"))
         Seq(s"scalapb.validate.Result.optional($accessor) { _value =>") ++
-          lines.dropRight(1).map(l => l + " &&") ++
-          Seq(lines.last, "}")
+          lines.dropRight(1).map(l => "  " + l + " &&") ++
+          Seq("  " + lines.last, "}")
       case RepeatedResult(fd, accessor, lines0) =>
         val lines = lines0.map(_.render(fd, "_value"))
         Seq(s"scalapb.validate.Result.repeated($accessor) { _value =>") ++
-          lines.dropRight(1).map(l => l + " &&") ++
-          Seq(lines.last, "}")
+          lines.dropRight(1).map(l => "  " + l + " &&") ++
+          Seq("  " + lines.last, "}")
     }
 
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {

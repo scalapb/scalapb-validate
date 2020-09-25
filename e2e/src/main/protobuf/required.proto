@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package examplepb2;
+
+import "validate/validate.proto";
+
+message Person {
+  message Location {
+    required double lat = 1 [(validate.rules).double = { gte: -90,  lte: 90 }];
+    required double lng = 2 [(validate.rules).double = { gte: -180, lte: 180 }];
+  }
+
+  required string email = 1 [(validate.rules).string.email = true];
+  required Location home = 2;
+  optional Location second_home = 3;
+}
