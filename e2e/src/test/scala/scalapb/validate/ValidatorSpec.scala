@@ -32,14 +32,23 @@ class ValidatorSpec extends munit.FunSuite {
   test("Person invalid email") {
     assertFailure(
       Validator[Person].validate(testPerson.copy(email = "not an email")),
-      ("email", "\"not an email\"") :: Nil
+      ("Person.email", "\"not an email\"") :: Nil
     )
   }
   test("Person invalid email and age") {
     assertFailure(
       Validator[Person]
         .validate(testPerson.copy(email = "not an email", age = -1)),
-      ("email", "\"not an email\"") :: ("age", Int.box(-1)) :: Nil
+      ("Person.email", "\"not an email\"") :: ("Person.age", Int.box(-1)) :: Nil
+    )
+  }
+  test("Person invalid location lat") {
+    assertFailure(
+      Validator[Person]
+        .validate(
+          testPerson.copy(home = Some(Person.Location(lat = 100, lng = 0)))
+        ),
+      ("Person.Location.lat", Double.box(100)) :: Nil
     )
   }
 }

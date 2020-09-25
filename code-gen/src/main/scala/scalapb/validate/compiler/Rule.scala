@@ -34,7 +34,9 @@ case class Rule(
   def render(descriptor: FieldDescriptor, input: String): String = {
     val e =
       ExpressionBuilder.run(inputTransform)(input, EnclosingType.None, false)
-    val maybeName = if (needsName) s""""${descriptor.getName()}", """ else ""
+    val maybeName =
+      if (needsName) s""""${Rule.getFullNameWithoutPackage(descriptor)}", """
+      else ""
     val base = s"""$funcName(${maybeName}${e}"""
     val out =
       if (args.isEmpty) base + ")"
@@ -78,4 +80,13 @@ object Rule {
 
   def ifSet[T](cond: => Boolean)(value: => T): Option[T] =
     if (cond) Some(value) else None
+
+  private def getFullNameWithoutPackage(descriptor: FieldDescriptor): String = {
+    val fullName = descriptor.getFullName
+    val packageName = descriptor.getFile.getPackage
+    if (packageName.isEmpty)
+      fullName
+    else
+      fullName.substring(packageName.length + 1)
+  }
 }
