@@ -37,3 +37,9 @@ jobs:
       run: |
         cd example
         sbt run
+  # Single final job for mergify.
+  ci-passed:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - run: ':'
