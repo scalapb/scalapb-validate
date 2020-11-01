@@ -9,3 +9,4 @@ examples/project/metals.sbt
 .vscode
 .pgv
 bazelisk
+.bsp
