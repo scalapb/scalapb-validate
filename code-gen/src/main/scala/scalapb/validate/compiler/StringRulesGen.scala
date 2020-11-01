@@ -4,9 +4,7 @@ import io.envoyproxy.pgv.validate.validate.StringRules
 import Rule._
 import com.google.protobuf.Descriptors.FieldDescriptor
 
-/**
-  * StringRulesGenerator helps generate the validation code for protocol buffer string typed field
-  *
+/** StringRulesGenerator helps generate the validation code for protocol buffer string typed field
   */
 object StringRulesGen {
   private val SV: String = "io.envoyproxy.pgv.StringValidation"

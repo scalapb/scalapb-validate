@@ -34,8 +34,7 @@ import io.undertow.server.handlers.BlockingHandler
 import java.net.Socket
 import java.net.ConnectException
 
-/**
-  * How this works?
+/** How this works?
   *
   * PGV test harness includes a go program (executor) that defines a protocol for
   * running the test cases against an arbitrary validator that can be implemented
