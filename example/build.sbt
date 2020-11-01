@@ -12,5 +12,5 @@ PB.targets in Compile := Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.thesamet.scalapb" %% "scalapb-validate-core" % scalapb.validate.compiler.BuildInfo.version % "protobuf",
+  "com.thesamet.scalapb" %% "scalapb-validate-core" % scalapb.validate.compiler.BuildInfo.version % "protobuf"
 )
