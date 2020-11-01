@@ -82,17 +82,14 @@ class MessagePrinter(
         message.getOneofs.asScala.toSeq.flatMap(formattedRulesForOneofs)
     val isDisabled = message.getOptions().getExtension(Validate.disabled)
     fp.add(
-        s"def validate(input: ${message.scalaType.fullName}): $Result ="
+      s"def validate(input: ${message.scalaType.fullName}): $Result ="
+    ).when(!isDisabled)(
+      _.indented(
+        _.addGroupsWithDelimiter(" &&")(ruleGroups)
       )
-      .when(!isDisabled)(
-        _.indented(
-          _.addGroupsWithDelimiter(" &&")(ruleGroups)
-        )
-      )
-      .when(ruleGroups.isEmpty || isDisabled)(
-        _.add("  scalapb.validate.Success")
-      )
-      .add("")
+    ).when(ruleGroups.isEmpty || isDisabled)(
+      _.add("  scalapb.validate.Success")
+    ).add("")
       .print(message.getNestedTypes.asScala)((fp, fd) =>
         new MessagePrinter(implicits, fd).printObject(fp)
       )
@@ -100,13 +97,11 @@ class MessagePrinter(
 
   def printObject(fp: FunctionalPrinter): FunctionalPrinter =
     fp.add(
-        s"object ${objectName.name} extends $Validator[${message.scalaType.fullName}] {"
-      )
-      .indented(
-        _.seq(fieldRules.flatMap(_.preambles))
-          .call(printValidate)
-      )
-      .add("}")
+      s"object ${objectName.name} extends $Validator[${message.scalaType.fullName}] {"
+    ).indented(
+      _.seq(fieldRules.flatMap(_.preambles))
+        .call(printValidate)
+    ).add("}")
 
   def content: String = {
     val fp = new FunctionalPrinter()
