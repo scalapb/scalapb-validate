@@ -1,4 +1,5 @@
 import Settings.stdSettings
+import scalapb.compiler.Version.scalapbVersion
 
 val Scala213 = "2.13.3"
 
@@ -42,6 +43,10 @@ lazy val core = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf"
+    ),
+    PB.targets in Compile := Seq(
+      PB.gens.java -> (sourceManaged in Compile).value / "scalapb",
+      scalapb.gen(javaConversions = true) -> (sourceManaged in Compile).value / "scalapb",
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
@@ -56,9 +61,14 @@ lazy val codeGen = projectMatrix
     buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "compilerplugin" % scalapb.compiler.Version.scalapbVersion,
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion,
+      "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0")
+    ),
+    PB.protoSources in Compile += core.base / "src" / "main" / "protobuf",
+    PB.targets in Compile := Seq(
+      PB.gens.java -> (sourceManaged in Compile).value / "scalapb"
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))

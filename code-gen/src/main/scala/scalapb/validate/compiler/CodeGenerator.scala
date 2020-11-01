@@ -20,6 +20,7 @@ object CodeGenerator extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
     Scalapb.registerAllExtensions(registry)
     Validate.registerAllExtensions(registry)
+    scalapb.Validate.registerAllExtensions(registry)
   }
 
   override def suggestedDependencies: Seq[Artifact] =
@@ -285,6 +286,10 @@ class MessagePrinter(
     val companionInsertion = message.messageCompanionInsertionPoint.withContent(
       s"implicit val validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
     )
-    Seq(validationFile, companionInsertion)
+    val insertValidation = message.getOptions
+      .getExtension(scalapb.Validate.validation)
+      .getInsertValidatorInstance
+    Seq(validationFile) ++ (if (insertValidation) Seq(companionInsertion)
+                            else Nil)
   }
 }
