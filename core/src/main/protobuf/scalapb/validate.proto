@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package scalapb;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MessageOptions {
+  optional MessageValidationOptions validation = 50001;
+}
+
+message MessageValidationOptions {
+  optional bool insert_validator_instance = 1 [default=true];
+}
