@@ -1,4 +1,4 @@
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.0-RC2")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.0-RC3")
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.8"
 
