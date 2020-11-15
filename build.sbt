@@ -46,7 +46,9 @@ lazy val core = projectMatrix
     ),
     PB.targets in Compile := Seq(
       PB.gens.java -> (sourceManaged in Compile).value / "scalapb",
-      scalapb.gen(javaConversions = true) -> (sourceManaged in Compile).value / "scalapb",
+      scalapb.gen(javaConversions =
+        true
+      ) -> (sourceManaged in Compile).value / "scalapb"
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
