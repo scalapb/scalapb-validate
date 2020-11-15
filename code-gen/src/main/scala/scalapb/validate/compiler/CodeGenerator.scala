@@ -12,7 +12,7 @@ import scalapb.compiler.{
   FunctionalPrinter,
   ProtobufGenerator
 }
-import scalapb.options.compiler.Scalapb
+import scalapb.options.Scalapb
 import scalapb.validate.compat.JavaConverters._
 import com.google.protobuf.Descriptors.OneofDescriptor
 
