@@ -23,7 +23,7 @@ jobs:
       run: |
         ./make_harness.sh
 
-    - uses: olafurpg/setup-scala@v5
+    - uses: olafurpg/setup-scala@v10
 
     - name: Compile and test
       run: |
