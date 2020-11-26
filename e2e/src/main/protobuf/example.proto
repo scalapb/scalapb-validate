@@ -25,3 +25,18 @@ message Person {
 
   fixed32 age = 6 [(validate.rules).fixed32 = {gte:30, lt: 40}];
 }
+
+message Cat {
+  Person food_provider = 1 [(validate.rules).message.required = true];
+}
+message Dog {
+  Person master = 1 [(validate.rules).message.required = true];
+}
+
+message Animal {
+  oneof sealed_value {
+    option (validate.required) = true;
+    Cat cat = 1;
+    Dog dog = 2;
+  }
+}
