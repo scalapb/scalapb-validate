@@ -95,7 +95,7 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "io.undertow" % "undertow-core" % "2.2.2.Final",
+      "io.undertow" % "undertow-core" % "2.2.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     PB.targets in Compile := Seq(
