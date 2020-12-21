@@ -3,20 +3,7 @@ package scalapb.validate
 import examplepb.example.Person
 import examplepb2.required.{Person => Person2}
 
-class ValidatorSpec extends munit.FunSuite {
-
-  def assertFailure[T](r: Result, expected: List[(String, AnyRef)])(implicit
-      loc: munit.Location
-  ) =
-    r match {
-      case Success => fail("expected a Failure, but was a Success")
-      case Failure(violations) =>
-        val fieldAndValues = violations.map { v =>
-          v.getField -> v.getValue
-        }
-        assertEquals(fieldAndValues, expected)
-    }
-
+class ValidatorSpec extends munit.FunSuite with ValidationHelpers {
   val testPerson = Person(
     id = 1000,
     email = "foo@bar.com",

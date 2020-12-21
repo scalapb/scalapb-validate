@@ -1,13 +1,64 @@
 syntax = "proto2";
 
-package scalapb;
+package scalapb.validate;
 
 import "google/protobuf/descriptor.proto";
+import "validate/validate.proto";
+import "scalapb/scalapb.proto";
 
-extend google.protobuf.MessageOptions {
-  optional MessageValidationOptions validation = 50001;
+// import "validate/validate.proto";
+
+// Field number 1089 has been assigned to ScalaPB-validate in
+// https://github.com/protocolbuffers/protobuf/pull/8111
+//
+// We extend ScalaPB's options, instead of google.protobuf so we can piggyback
+// on ScalaPB features such as package-scoped options and auxiliary options.
+extend scalapb.ScalaPbOptions {
+  optional FileValidationOptions file = 1089;
 }
 
-message MessageValidationOptions {
+extend scalapb.MessageOptions {
+  optional MessageValidationOptions message = 1089;
+}
+
+extend scalapb.FieldOptions {
+  optional FieldValidationOptions field = 1089;
+}
+
+message FileValidationOptions {
   optional bool insert_validator_instance = 1 [default=true];
+  optional bool validate_at_construction = 2  [default=false];
+}
+
+// Falls back on file validation options (where default exists)
+message MessageValidationOptions {
+  optional bool insert_validator_instance = 1;
+  optional bool validate_at_construction = 2;
+}
+
+message FieldValidationOptions {
+  optional bool skip_unique_check = 1;
+}
+
+// Preprocessor options
+message FieldTransformation {
+  optional .validate.FieldRules when = 1;
+  enum MatchType {
+    CONTAINS = 0;
+    EXACT = 1;
+  }
+  optional MatchType match_type = 2 [default=CONTAINS];
+  optional scalapb.FieldOptions set = 3;
+}
+
+message PackageOptions {
+  repeated FieldTransformation field_transformations = 1;
+
+  optional bool unique_to_set   = 2;  // transform "repeated.unique: true" to sets.
+  optional bool cats_transforms = 3;  // transform to non-empty map, list and set.
+
+}
+
+extend google.protobuf.FileOptions {
+  optional PackageOptions package = 1089;
 }

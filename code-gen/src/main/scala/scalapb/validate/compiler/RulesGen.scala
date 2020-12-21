@@ -8,11 +8,13 @@ import scalapb.validate.compiler.ComparativeRulesGen.{
   durationOrdering,
   timestampOrdering
 }
+import scalapb.compiler.DescriptorImplicits
 
 object RulesGen {
   def rulesSingle(
       fd: FieldDescriptor,
-      rules: FieldRules
+      rules: FieldRules,
+      implicits: DescriptorImplicits
   ): Seq[Rule] =
     rules.`type` match {
       case Type.String(stringRules) =>
@@ -67,7 +69,7 @@ object RulesGen {
         BooleanRulesGen.booleanRules(boolRules)
 
       case Type.Repeated(repeatedRules) =>
-        RepeatedRulesGen.repeatedRules(repeatedRules)
+        RepeatedRulesGen.repeatedRules(fd, repeatedRules, implicits)
 
       case Type.Any(anyRules) =>
         MembershipRulesGen.membershipRules(
@@ -76,7 +78,7 @@ object RulesGen {
         )
 
       case Type.Map(mapRules) =>
-        MapRulesGen.mapRules(mapRules)
+        MapRulesGen.mapRules(fd, mapRules, implicits)
 
       case Type.Enum(enumRules) =>
         EnumRulesGen.enumRules(enumRules)

@@ -35,12 +35,16 @@ object Result {
   def optional[T](value: Option[T])(eval: T => Result): Result =
     value.fold[Result](Success)(eval)
 
-  def collect(results: Iterable[Result]): Result =
+  def collect(results: Iterator[Result]): Result =
     results.foldLeft[Result](Success) { case (left, right) => left && right }
 
-  def repeated[T](value: Iterable[T])(eval: T => Result): Result =
+  def collect(results: Iterable[Result]): Result = collect(results.iterator)
+
+  def repeated[T](value: Iterator[T])(eval: T => Result): Result =
     collect(value.map(eval))
 
+  def repeated[T](value: Iterable[T])(eval: T => Result): Result =
+    repeated(value.iterator)(eval)
 }
 
 case object Success extends Result {
@@ -72,4 +76,13 @@ trait Validator[T] {
 
 object Validator {
   def apply[T: Validator] = implicitly[Validator[T]]
+
+  def assertValid[T: Validator](instance: T): Unit =
+    Validator[T].validate(instance) match {
+      case Success =>
+      case Failure(violations) =>
+        throw new IllegalArgumentException(
+          "Validation failed: " + violations.map(_.toString()).mkString(", ")
+        )
+    }
 }

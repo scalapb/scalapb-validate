@@ -5,23 +5,29 @@ import io.envoyproxy.pgv.ValidationException
 object MapValidation {
   val SPARSE_MAPS_NOT_SUPPORTED = "Sparse maps are not supported"
 
-  def maxPairs[K, V](name: String, v: Map[K, V], limit: Int) =
+  def maxPairs[K, V](name: String, v: Map[K, V], limit: Int): Result =
+    maxPairs(name, v.size, limit)
+
+  def minPairs[K, V](name: String, v: Map[K, V], limit: Int): Result =
+    minPairs(name, v.size, limit)
+
+  def maxPairs[K, V](name: String, actualSize: Int, limit: Int): Result =
     Result(
-      v.size <= limit,
+      actualSize <= limit,
       new ValidationException(
         name,
-        v,
-        s"$v must have at most $limit pairs"
+        actualSize,
+        s"Expected map to have at most $limit pair, got $actualSize"
       )
     )
 
-  def minPairs[K, V](name: String, v: Map[K, V], limit: Int) =
+  def minPairs[K, V](name: String, actualSize: Int, limit: Int): Result =
     Result(
-      v.size >= limit,
+      actualSize >= limit,
       new ValidationException(
         name,
-        v,
-        s"$v must have at least $limit pairs"
+        actualSize,
+        s"Expected map to have at least $limit pair, got $actualSize"
       )
     )
 

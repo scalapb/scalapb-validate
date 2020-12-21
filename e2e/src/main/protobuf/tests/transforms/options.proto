@@ -1,0 +1,26 @@
+syntax = "proto2";
+
+package scalapb.transforms;
+
+import "scalapb/scalapb.proto";
+import "scalapb/validate.proto";
+
+option (scalapb.options) = {
+    scope: PACKAGE
+    [scalapb.validate.file] {
+        validate_at_construction: true
+    }
+};
+
+option (scalapb.validate.package) = {
+    field_transformations: [
+        {
+            when: {int32: {gt: 0}}
+            set: {
+              type: "scalapb.transforms.PositiveInt"
+            }
+        }
+    ]
+    cats_transforms: true
+    unique_to_set: true
+};

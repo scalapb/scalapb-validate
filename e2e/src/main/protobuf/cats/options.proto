@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package e2e.cats;
+
+import "scalapb/scalapb.proto";
+import "scalapb/validate.proto";
+
+option (scalapb.options) = {
+    scope: PACKAGE
+    preprocessors: ["scalapb-validate-preprocessor"]
+};
+
+option (scalapb.validate.package) = {
+    cats_transforms: true
+};

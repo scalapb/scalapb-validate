@@ -3,7 +3,6 @@ package scalapb.validate.compiler
 import com.google.protobuf.Descriptors.FieldDescriptor
 import scalapb.compiler.Expression
 import scalapb.compiler.Identity
-import scalapb.compiler.ExpressionBuilder
 import scalapb.compiler.EnclosingType
 import scalapb.compiler.FunctionApplication
 
@@ -33,7 +32,7 @@ case class Rule(
   self =>
   def render(descriptor: FieldDescriptor, input: String): String = {
     val e =
-      ExpressionBuilder.run(inputTransform)(input, EnclosingType.None, false)
+      inputTransform(input, EnclosingType.None, false)
     val maybeName =
       if (needsName) s""""${Rule.getFullNameWithoutPackage(descriptor)}", """
       else ""
@@ -41,7 +40,7 @@ case class Rule(
     val out =
       if (args.isEmpty) base + ")"
       else base + args.mkString(", ", ", ", ")")
-    ExpressionBuilder.run(outputTranform)(out, EnclosingType.None, false)
+    outputTranform(out, EnclosingType.None, false)
   }
 
   def wrapJava: Rule =
