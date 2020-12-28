@@ -6,27 +6,32 @@ import com.google.protobuf.InvalidProtocolBufferException
 import scalapb.validate.Success
 import scalapb.validate.Validator
 import scalapb.validate.ValidationHelpers
+import scalapb.json4s.JsonFormat
 
 class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
+  val nonEmptyTypes = NonEmptyTypes(
+    nonEmptySet = NonEmptySet.of("foo", "bar"),
+    nonEmptyList = NonEmptyList.of("bar", "baz"),
+    nonEmptyMap = NonEmptyMap.of(3 -> 4)
+  )
   test("NonEmptyTypes serialize and parse successfully") {
-    val p = NonEmptyTypes(
-      nonEmptySet = NonEmptySet.of("foo", "bar"),
-      nonEmptyList = NonEmptyList.of("bar", "baz"),
-      nonEmptyMap = NonEmptyMap.of(3 -> 4)
+    assertEquals(
+      NonEmptyTypes.parseFrom(nonEmptyTypes.toByteArray),
+      nonEmptyTypes
     )
-    assertEquals(NonEmptyTypes.parseFrom(p.toByteArray), p)
-    assertEquals(NonEmptyTypes.fromAscii(p.toProtoString), p)
-    assertEquals(Validator[NonEmptyTypes].validate(p).isSuccess, true)
+    assertEquals(
+      NonEmptyTypes.fromAscii(nonEmptyTypes.toProtoString),
+      nonEmptyTypes
+    )
+    assertEquals(
+      Validator[NonEmptyTypes].validate(nonEmptyTypes).isSuccess,
+      true
+    )
   }
 
   test("NonEmptyTypes fails to construct if invalid") {
-    val p = NonEmptyTypes(
-      nonEmptySet = NonEmptySet.of("foo", "bar"),
-      nonEmptyList = NonEmptyList.of("bar", "baz"),
-      nonEmptyMap = NonEmptyMap.of(3 -> 4)
-    )
     intercept[IllegalArgumentException] {
-      p.copy(foo = "verylongstring")
+      nonEmptyTypes.copy(foo = "verylongstring")
     }
   }
 
@@ -89,7 +94,26 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
         ("NonEmptyTypesWithSubRules.NonEmptyMapEntry.value", Int.box(4))
       )
     )
+  }
 
+  test("cat types are json-serializable") {
+    assertEquals(
+      JsonFormat.fromJsonString[NonEmptyTypes](
+        JsonFormat.toJsonString(nonEmptyTypes)
+      ),
+      nonEmptyTypes
+    )
+  }
+
+  test("Throws exception for empty list in json parsing") {
+    val j = """
+    {"nonEmptySet":["bar","foo"],"nonEmptyList":[],"nonEmptyMap":{"3":4}}
+    """
+    interceptMessage[InvalidProtocolBufferException](
+      "NonEmptyList must be non-empty"
+    ) {
+      JsonFormat.fromJsonString[NonEmptyTypes](j)
+    }
   }
 
 }

@@ -109,9 +109,10 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
+      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.10.2",
       "org.typelevel" %% "cats-core" % "2.3.0",
       "io.undertow" % "undertow-core" % "2.2.3.Final",
-      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
+      "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf",
     ),
     PB.targets in Compile := Seq(
       genModule("scalapb.validate.compiler.ValidatePreprocessor$") ->
