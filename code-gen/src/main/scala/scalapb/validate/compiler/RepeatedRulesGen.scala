@@ -29,7 +29,7 @@ object RepeatedRulesGen {
         )
       ),
       Rule.ifSet(
-        rules.getUnique && field
+        rules.getUnique && !field
           .getOptions()
           .getExtension(scalapb.options.Scalapb.field)
           .getExtension(scalapb.validate.Validate.field)
