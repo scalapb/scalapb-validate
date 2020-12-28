@@ -201,6 +201,9 @@ class ProcessRequest(req: CodeGenRequest) {
         }
         set: {
           collection_type: "_root_.scala.collection.immutable.Set"
+          [scalapb.validate.field] {
+            skip_unique_check: true
+          }
         }""".stripMargin)
   )
 
@@ -214,6 +217,9 @@ class ProcessRequest(req: CodeGenRequest) {
                type: "_root_.cats.data.NonEmptySet"
                adapter: "_root_.scalapb.validate.cats.NonEmptySetAdapter"
                non_empty: true
+             }
+             [scalapb.validate.field] {
+               skip_unique_check: true
              }
            }"""),
       fieldTransformation("""when: {

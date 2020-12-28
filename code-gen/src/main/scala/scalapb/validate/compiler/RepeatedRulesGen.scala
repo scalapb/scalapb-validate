@@ -3,6 +3,7 @@ package scalapb.validate.compiler
 import io.envoyproxy.pgv.validate.validate.RepeatedRules
 import scalapb.compiler.DescriptorImplicits
 import com.google.protobuf.Descriptors.FieldDescriptor
+import scalapb.compiler.MethodApplication
 
 object RepeatedRulesGen {
   val RR = "scalapb.validate.RepeatedValidation"
@@ -29,12 +30,18 @@ object RepeatedRulesGen {
         )
       ),
       Rule.ifSet(
-        rules.getUnique && !field
-          .getOptions()
-          .getExtension(scalapb.options.Scalapb.field)
+        rules.getUnique /* && !field
+          .fieldOptions
           .getExtension(scalapb.validate.Validate.field)
-          .getSkipUniqueCheck()
-      )(Rule.basic(s"$RR.unique"))
+          .getSkipUniqueCheck() */
+      )(
+        Rule.basic(
+          s"$RR.unique",
+          Seq(),
+          inputTransform =
+            field.collection.iterator.andThen(MethodApplication("toSeq"))
+        )
+      )
     ).flatten
   }
 }

@@ -43,7 +43,7 @@ lazy val core = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf",
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
     PB.targets in Compile := Seq(
       PB.gens.java -> (sourceManaged in Compile).value / "scalapb",
@@ -61,11 +61,10 @@ lazy val cats = projectMatrix
     name := "scalapb-validate-cats",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.3.0" % "provided",
-      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "provided",
-    ),
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "provided"
+    )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
-
 
 lazy val codeGen = projectMatrix
   .in(file("code-gen"))

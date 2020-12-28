@@ -37,7 +37,7 @@ message MessageValidationOptions {
 }
 
 message FieldValidationOptions {
-  optional bool skip_unique_check = 1;
+  optional bool skip_unique_check = 1;  // not implemented yet
 }
 
 // Preprocessor options

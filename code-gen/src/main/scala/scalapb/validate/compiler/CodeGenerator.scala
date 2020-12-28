@@ -15,6 +15,7 @@ import scalapb.compiler.{
 import scalapb.options.Scalapb
 import scalapb.validate.compat.JavaConverters._
 import com.google.protobuf.Descriptors.OneofDescriptor
+import scalapb.compiler.EnclosingType
 
 object CodeGenerator extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
@@ -181,12 +182,13 @@ class MessagePrinter(
       ) {
         val tm = fd.typeMapper.fullName
         if (fd.isRepeated() && !fd.isMapField())
-          s"${fd.collection.iterator(e)}.map($tm.toBase)"
+          s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
         else if (fd.isMapField()) e
         else if (fd.supportsPresence) s"$e.map($tm.toBase)"
         else s"${tm}.toBase($e)"
       } else {
-        if (fd.isRepeated && !fd.isMapField) fd.collection.iterator(e)
+        if (fd.isRepeated && !fd.isMapField)
+          fd.collection.iterator(e, EnclosingType.None)
         else e
       }
 
@@ -235,12 +237,14 @@ class MessagePrinter(
         repeatedRules(
           fd.getMessageType().findFieldByNumber(1),
           rulesProto.getMap.getKeys,
-          fd.collection.iterator(accessor) + accessKeyOrValue(1)
+          fd.collection
+            .iterator(accessor, EnclosingType.None) + accessKeyOrValue(1)
         ) ++
           repeatedRules(
             fd.getMessageType().findFieldByNumber(2),
             rulesProto.getMap.getValues,
-            fd.collection.iterator(accessor) + accessKeyOrValue(2)
+            fd.collection
+              .iterator(accessor, EnclosingType.None) + accessKeyOrValue(2)
           )
       } else Seq.empty
 
