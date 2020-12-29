@@ -1,7 +1,7 @@
 package scalapb.validate.transforms
 
 import scalapb.validate.ValidationHelpers
-import scalapb.transforms.test.{MyTestMessage, MyTestMessageWithNonEmpty}
+import scalapb.transforms.field.{MyTestMessage, MyTestMessageWithNonEmpty}
 import scalapb.transforms.PositiveInt
 import scalapb.validate.{Success, Validator}
 import cats.data.NonEmptyList

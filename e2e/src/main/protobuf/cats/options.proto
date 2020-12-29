@@ -12,4 +12,5 @@ option (scalapb.options) = {
 
 option (scalapb.validate.package) = {
     cats_transforms: true
+    unique_to_set: true
 };

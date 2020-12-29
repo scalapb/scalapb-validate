@@ -2,7 +2,7 @@ package scalapb.transforms
 
 import scalapb.TypeMapper
 
-import scalapb.transforms.test.MyMsg
+import scalapb.transforms.field.MyMsg
 
 final case class MyCustomType(a: String)
 

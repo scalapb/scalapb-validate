@@ -6,6 +6,17 @@ import "scalapb/validate.proto";
 import "validate/validate.proto";
 import "scalapb/scalapb.proto";
 
+enum Color {
+  DEFAULT = 0;
+  RED = 1;
+  GREEN = 2;
+  BLUE = 3;
+}
+
+message SubMsg {
+  int32 a = 1;
+}
+
 message NonEmptyTypes {
   option (scalapb.message) = {
     [scalapb.validate.message] {

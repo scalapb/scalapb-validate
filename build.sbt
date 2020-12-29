@@ -114,6 +114,8 @@ lazy val e2e = projectMatrix
       "io.undertow" % "undertow-core" % "2.2.3.Final",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
+    TestProtosGenerator.generateAllTypesProtoSettings,
+    (Compile / PB.protoSources) += (sourceManaged in Compile).value / "protobuf",
     PB.targets in Compile := Seq(
       genModule("scalapb.validate.compiler.ValidatePreprocessor$") ->
         (sourceManaged in Compile).value / "scalapb",

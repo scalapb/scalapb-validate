@@ -1,6 +1,6 @@
 addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.0-RC6")
 
-libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.10-preview2"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.10.10-preview2+2-cd49b8e8-SNAPSHOT"
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.2")
 

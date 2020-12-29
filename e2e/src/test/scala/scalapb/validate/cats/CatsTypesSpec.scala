@@ -7,6 +7,9 @@ import scalapb.validate.Success
 import scalapb.validate.Validator
 import scalapb.validate.ValidationHelpers
 import scalapb.json4s.JsonFormat
+import e2e.cats.alltypes.instances
+import scalapb.GeneratedMessage
+import scalapb.GeneratedMessageCompanion
 
 class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
   val nonEmptyTypes = NonEmptyTypes(
@@ -113,6 +116,29 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
       "NonEmptyList must be non-empty"
     ) {
       JsonFormat.fromJsonString[NonEmptyTypes](j)
+    }
+  }
+
+  test("all instances serialize and parse to binary") {
+    instances.all.foreach { p =>
+      assertEquals(
+        p.companion.parseFrom(p.toByteArray).asInstanceOf[GeneratedMessage],
+        p
+      )
+    }
+  }
+
+  test("all instances serialize and parse to json") {
+    instances.all.foreach { p =>
+      assertEquals(
+        JsonFormat
+          .fromJsonString[GeneratedMessage](JsonFormat.toJsonString(p))(
+            p.companion
+              .asInstanceOf[GeneratedMessageCompanion[GeneratedMessage]]
+          )
+          .asInstanceOf[GeneratedMessage],
+        p
+      )
     }
   }
 
