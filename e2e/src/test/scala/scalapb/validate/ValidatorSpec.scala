@@ -51,4 +51,18 @@ class ValidatorSpec extends munit.FunSuite with ValidationHelpers {
     )
 
   }
+
+  test("assertValid does nothing if the object is valid") {
+    Validator.assertValid(testPerson)(Validator[Person])
+  }
+
+  test("assertValid raises an Exception if the object is invalid") {
+    interceptMessage[ValidationException](
+      "Validation failed: io.envoyproxy.pgv.ValidationException: Person.email: should be a valid email - Got \"not an email\", io.envoyproxy.pgv.ValidationException: Person.age: -1 must be in the range [30, 40) - Got -1"
+    ) {
+      Validator.assertValid(testPerson.copy(email = "not an email", age = -1))(
+        Validator[Person]
+      )
+    }
+  }
 }

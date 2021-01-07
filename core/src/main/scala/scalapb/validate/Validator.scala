@@ -1,6 +1,6 @@
 package scalapb.validate
 
-import io.envoyproxy.pgv.ValidationException
+import io.envoyproxy.pgv
 import scala.util.Try
 
 sealed trait Result {
@@ -20,8 +20,8 @@ sealed trait Result {
 object Result {
   def run[T](code: => T): Result =
     Try(code) match {
-      case scala.util.Success(_)                      => Success
-      case scala.util.Failure(e: ValidationException) => Failure(e :: Nil)
+      case scala.util.Success(_)                          => Success
+      case scala.util.Failure(e: pgv.ValidationException) => Failure(e :: Nil)
       case scala.util.Failure(ex) =>
         throw new RuntimeException(
           s"Unexpected exception. Please report this as a bug: ${ex.getMessage()}",
@@ -29,7 +29,7 @@ object Result {
         )
     }
 
-  def apply(cond: => Boolean, onError: => ValidationException): Result =
+  def apply(cond: => Boolean, onError: => pgv.ValidationException): Result =
     if (cond) Success else Failure(onError :: Nil)
 
   def optional[T](value: Option[T])(eval: T => Result): Result =
@@ -53,14 +53,16 @@ case object Success extends Result {
   def toFailure: Option[Failure] = None
 }
 
-case class Failure(violations: List[ValidationException]) extends Result {
+case class Failure(violations: List[pgv.ValidationException]) extends Result {
   def isSuccess: Boolean = false
   def isFailure: Boolean = true
   def toFailure: Option[Failure] = Some(this)
 }
 
 object Failure {
-  def apply(violation: ValidationException): Failure = Failure(violation :: Nil)
+  def apply(violation: pgv.ValidationException): Failure = Failure(
+    violation :: Nil
+  )
 }
 
 trait Validator[T] {
@@ -81,8 +83,11 @@ object Validator {
     Validator[T].validate(instance) match {
       case Success =>
       case Failure(violations) =>
-        throw new IllegalArgumentException(
+        throw new ValidationException(
           "Validation failed: " + violations.map(_.toString()).mkString(", ")
         )
     }
 }
+
+class ValidationException(message: String)
+    extends IllegalArgumentException(message)
