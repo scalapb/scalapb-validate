@@ -1,7 +1,5 @@
 package scalapb.validate
 
-import io.envoyproxy.pgv.ValidationException
-
 object MapValidation {
   val SPARSE_MAPS_NOT_SUPPORTED = "Sparse maps are not supported"
 
@@ -14,7 +12,7 @@ object MapValidation {
   def maxPairs[K, V](name: String, actualSize: Int, limit: Int): Result =
     Result(
       actualSize <= limit,
-      new ValidationException(
+      ValidationFailure(
         name,
         actualSize,
         s"Expected map to have at most $limit pair, got $actualSize"
@@ -24,7 +22,7 @@ object MapValidation {
   def minPairs[K, V](name: String, actualSize: Int, limit: Int): Result =
     Result(
       actualSize >= limit,
-      new ValidationException(
+      ValidationFailure(
         name,
         actualSize,
         s"Expected map to have at least $limit pair, got $actualSize"
@@ -32,5 +30,5 @@ object MapValidation {
     )
 
   def notSparse[K, V](name: String, v: Map[K, V]) =
-    Failure(new ValidationException(name, v, SPARSE_MAPS_NOT_SUPPORTED))
+    Failure(ValidationFailure(name, v, SPARSE_MAPS_NOT_SUPPORTED))
 }

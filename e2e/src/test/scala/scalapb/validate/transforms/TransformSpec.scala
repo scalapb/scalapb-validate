@@ -1,5 +1,6 @@
 package scalapb.validate.transforms
 
+import scalapb.validate.ValidationException
 import scalapb.validate.ValidationHelpers
 import scalapb.transforms.field.{MyTestMessage, MyTestMessageWithNonEmpty}
 import scalapb.transforms.PositiveInt
@@ -29,7 +30,7 @@ class TransformsSpec extends munit.FunSuite with ValidationHelpers {
   }
 
   test("MyTestMessage will not instantiate invalid") {
-    assert(intercept[IllegalArgumentException] {
+    assert(intercept[ValidationException] {
       msg.copy(foo = -20)
     }.getMessage().contains("MyTestMessage.foo: -20 must be greater than -5"))
   }
@@ -45,7 +46,7 @@ class TransformsSpec extends munit.FunSuite with ValidationHelpers {
     )
     assertEquals(MyTestMessageWithNonEmpty.parseFrom(msg.toByteArray), msg)
     assertEquals(Validator[MyTestMessageWithNonEmpty].validate(msg), Success)
-    intercept[IllegalArgumentException] {
+    intercept[ValidationException] {
       msg.withMapMsg(
         NonEmptyMap.of(PositiveInt(4) -> MyCustomType("boom")) // must be boo
       )

@@ -1,7 +1,5 @@
 package scalapb.validate
 
-import io.envoyproxy.pgv.ValidationException
-
 class ResultSpec extends munit.FunSuite {
 
   test("Success is success") {
@@ -11,15 +9,15 @@ class ResultSpec extends munit.FunSuite {
   }
 
   test("Failure is failure") {
-    val failure = Failure(new ValidationException("field", 42, "reason"))
+    val failure = Failure(ValidationFailure("field", 42, "reason"))
     assertEquals(failure.isSuccess, false)
     assertEquals(failure.isFailure, true)
     assertEquals(failure.toFailure, Some(failure))
   }
 
   test("Result && Result") {
-    val failure = Failure(new ValidationException("field", 42, "reason"))
-    val otherFailure = Failure(new ValidationException("field2", 24, "reason"))
+    val failure = Failure(ValidationFailure("field", 42, "reason"))
+    val otherFailure = Failure(ValidationFailure("field2", 24, "reason"))
     assertEquals(Success && Success, Success)
     assertEquals(Success && failure, failure)
     assertEquals(failure && Success, failure)
@@ -34,7 +32,7 @@ class ResultSpec extends munit.FunSuite {
   }
 
   test("Result.apply") {
-    val exception = new ValidationException("field", 42, "reason")
+    val exception = ValidationFailure("field", 42, "reason")
     assertEquals(
       Result(true, sys.error("failure branch should be lazy")),
       Success
@@ -43,7 +41,7 @@ class ResultSpec extends munit.FunSuite {
   }
 
   test("Result.optional") {
-    val exception = new ValidationException("field", 42, "reason")
+    val exception = ValidationFailure("field", 42, "reason")
     assertEquals(
       Result.optional(Some("value")) { value =>
         assertEquals(value, "value")
@@ -67,8 +65,8 @@ class ResultSpec extends munit.FunSuite {
   }
 
   test("Result.collect") {
-    val failure = Failure(new ValidationException("field", 42, "reason"))
-    val otherFailure = Failure(new ValidationException("field2", 24, "reason"))
+    val failure = Failure(ValidationFailure("field", 42, "reason"))
+    val otherFailure = Failure(ValidationFailure("field2", 24, "reason"))
     assertEquals(Result.collect(Nil), Success)
     assertEquals(Result.collect(Success :: Nil), Success)
     assertEquals(Result.collect(Success :: Success :: Nil), Success)
@@ -88,8 +86,8 @@ class ResultSpec extends munit.FunSuite {
   }
 
   test("Result.repeated") {
-    val failure = Failure(new ValidationException("field", 42, "reason"))
-    val otherFailure = Failure(new ValidationException("field2", 24, "reason"))
+    val failure = Failure(ValidationFailure("field", 42, "reason"))
+    val otherFailure = Failure(ValidationFailure("field2", 24, "reason"))
     assertEquals(
       Result.repeated(Nil)(_ => sys.error("cannot be invoked")),
       Success

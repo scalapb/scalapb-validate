@@ -10,7 +10,7 @@ trait ValidationHelpers {
       case Success => fail("expected a Failure, but was a Success")
       case Failure(violations) =>
         val fieldAndValues = violations.map { v =>
-          v.getField -> v.getValue
+          v.field -> v.value
         }
         assertEquals(fieldAndValues, expected)
     }

@@ -2,6 +2,7 @@ package scalapb.validate.compiler
 
 import com.google.protobuf.Descriptors.FileDescriptor
 import scalapb.validate.Validate.PackageOptions
+import scalapb.compiler.GeneratorException
 
 class PackageOptionsCache(cache: Map[String, PackageOptions]) {
   def get(packageName: String): PackageOptions =
@@ -36,7 +37,7 @@ object PackageOptionsCache {
     }
 
     givenPackageOptions.groupBy(_._1).find(_._2.length > 1).foreach { p =>
-      throw new IllegalArgumentException(
+      throw new GeneratorException(
         s"Preprocessor options for package '${p._1}' found in more than one proto file."
       )
     }

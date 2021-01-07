@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException
 import scalapb.validate.Success
 import scalapb.validate.Validator
 import scalapb.validate.ValidationHelpers
+import scalapb.validate.ValidationException
 import scalapb.json4s.JsonFormat
 import e2e.cats.alltypes.instances
 import scalapb.GeneratedMessage
@@ -33,7 +34,7 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
   }
 
   test("NonEmptyTypes fails to construct if invalid") {
-    intercept[IllegalArgumentException] {
+    intercept[ValidationException] {
       nonEmptyTypes.copy(foo = "verylongstring")
     }
   }
