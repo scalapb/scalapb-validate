@@ -84,7 +84,7 @@ object Validator {
       case Success =>
       case Failure(violations) =>
         throw new ValidationException(
-          "Validation failed: " + violations.map(_.toString()).mkString(", ")
+          "Validation failed: " + violations.map(_.getMessage()).mkString(", ")
         )
     }
 }
