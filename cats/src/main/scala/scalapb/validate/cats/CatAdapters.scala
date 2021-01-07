@@ -4,12 +4,12 @@ import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import scala.collection.immutable.SortedSet
 import scala.collection.immutable.SortedMap
 import scala.collection.mutable.Builder
-import com.google.protobuf.InvalidProtocolBufferException
+import scalapb.validate.ValidationException
 
 object NonEmptyListAdapter {
   def foreach[T](coll: NonEmptyList[T])(f: T => Unit) = coll.map(f)
 
-  def empty[T]: NonEmptyList[T] = throw new InvalidProtocolBufferException(
+  def empty[T]: NonEmptyList[T] = throw new ValidationException(
     "NonEmptyList must be non-empty"
   )
 
@@ -19,7 +19,7 @@ object NonEmptyListAdapter {
       NonEmptyList
         .fromList(list)
         .getOrElse(
-          throw new InvalidProtocolBufferException(
+          throw new ValidationException(
             "NonEmptyList must be non-empty"
           )
         )
@@ -39,7 +39,7 @@ object NonEmptyListAdapter {
 object NonEmptySetAdapter {
   def foreach[T](coll: NonEmptySet[T])(f: T => Unit) = coll.map(f)
 
-  def empty[T]: NonEmptySet[T] = throw new InvalidProtocolBufferException(
+  def empty[T]: NonEmptySet[T] = throw new ValidationException(
     "NonEmptySet must be non-empty"
   )
 
@@ -49,7 +49,7 @@ object NonEmptySetAdapter {
       NonEmptySet
         .fromSet(set)
         .getOrElse(
-          throw new InvalidProtocolBufferException(
+          throw new ValidationException(
             "NonEmptySet must be non-empty"
           )
         )
@@ -72,7 +72,7 @@ object NonEmptyMapAdapter {
   def foreach[K, V](coll: NonEmptyMap[K, V])(f: ((K, V)) => Unit) =
     coll.toSortedMap.foreach(f)
 
-  def empty[K, V]: NonEmptyMap[K, V] = throw new InvalidProtocolBufferException(
+  def empty[K, V]: NonEmptyMap[K, V] = throw new ValidationException(
     "NonEmptyMap must be non-empty"
   )
 
@@ -82,7 +82,7 @@ object NonEmptyMapAdapter {
       NonEmptyMap
         .fromMap(map)
         .getOrElse(
-          throw new InvalidProtocolBufferException(
+          throw new ValidationException(
             "NonEmptyMap must be non-empty"
           )
         )

@@ -2,7 +2,6 @@ package scalapb.validate.cats
 
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
 import e2e.cats.types.{NonEmptyTypes, NonEmptyTypesWithSubRules}
-import com.google.protobuf.InvalidProtocolBufferException
 import scalapb.validate.Success
 import scalapb.validate.Validator
 import scalapb.validate.ValidationHelpers
@@ -40,7 +39,7 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
   }
 
   test("NonEmptyTypes fail when input is empty") {
-    interceptMessage[InvalidProtocolBufferException](
+    interceptMessage[ValidationException](
       "NonEmptySet must be non-empty"
     )(NonEmptyTypes.parseFrom(Array[Byte]()))
   }
@@ -113,7 +112,7 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
     val j = """
     {"nonEmptySet":["bar","foo"],"nonEmptyList":[],"nonEmptyMap":{"3":4}}
     """
-    interceptMessage[InvalidProtocolBufferException](
+    interceptMessage[ValidationException](
       "NonEmptyList must be non-empty"
     ) {
       JsonFormat.fromJsonString[NonEmptyTypes](j)
@@ -142,5 +141,4 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
       )
     }
   }
-
 }

@@ -54,6 +54,7 @@ lazy val core = projectMatrix
 
 lazy val cats = projectMatrix
   .in(file("cats"))
+  .dependsOn(core)
   .defaultAxes()
   .settings(stdSettings)
   .settings(munitSettings)

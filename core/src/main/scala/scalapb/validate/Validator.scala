@@ -97,8 +97,11 @@ trait Validator[T] {
     }
 }
 
-class ValidationException(val failure: Failure)
-    extends InvalidProtocolBufferException(
+class ValidationException(message: String)
+    extends InvalidProtocolBufferException(message)
+
+class FieldValidationException(failure: Failure)
+    extends ValidationException(
       "Validation failed: " + failure.violations
         .map(_.toString())
         .mkString(", ")
@@ -111,6 +114,6 @@ object Validator {
     Validator[T].validate(instance) match {
       case Success =>
       case failure: Failure =>
-        throw new ValidationException(failure)
+        throw new FieldValidationException(failure)
     }
 }
