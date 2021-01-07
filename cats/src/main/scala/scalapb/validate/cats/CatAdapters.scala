@@ -1,7 +1,6 @@
 package scalapb.validate.cats
 
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
-import scalapb.descriptors.{PRepeated, Reads, ReadsException}
 import scala.collection.immutable.SortedSet
 import scala.collection.immutable.SortedMap
 import scala.collection.mutable.Builder
@@ -13,12 +12,6 @@ object NonEmptyListAdapter {
   def empty[T]: NonEmptyList[T] = throw new InvalidProtocolBufferException(
     "NonEmptyList must be non-empty"
   )
-
-  def reads[T](implicit reads: Reads[T]): Reads[NonEmptyList[T]] =
-    Reads[NonEmptyList[T]] {
-      case PRepeated(value) => fromIterator(value.map(reads.read).iterator)
-      case _                => throw new ReadsException("Expected PRepeated")
-    }
 
   def newBuilder[T]: Builder[T, NonEmptyList[T]] = List
     .newBuilder[T]
@@ -49,12 +42,6 @@ object NonEmptySetAdapter {
   def empty[T]: NonEmptySet[T] = throw new InvalidProtocolBufferException(
     "NonEmptySet must be non-empty"
   )
-
-  def reads[T: Ordering](implicit reads: Reads[T]): Reads[NonEmptySet[T]] =
-    Reads[NonEmptySet[T]] {
-      case PRepeated(value) => fromIterator(value.map(reads.read).iterator)
-      case _                => throw new ReadsException("Expected PRepeated")
-    }
 
   def newBuilder[T: Ordering]: Builder[T, NonEmptySet[T]] = SortedSet
     .newBuilder[T]
