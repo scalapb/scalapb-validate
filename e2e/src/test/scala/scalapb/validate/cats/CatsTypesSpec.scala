@@ -40,7 +40,7 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
 
   test("NonEmptyTypes fail when input is empty") {
     interceptMessage[ValidationException](
-      "NonEmptySet must be non-empty"
+      "Could not build an empty NonEmptySet"
     )(NonEmptyTypes.parseFrom(Array[Byte]()))
   }
 
@@ -113,7 +113,7 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
     {"nonEmptySet":["bar","foo"],"nonEmptyList":[],"nonEmptyMap":{"3":4}}
     """
     interceptMessage[ValidationException](
-      "NonEmptyList must be non-empty"
+      "Could not build an empty NonEmptyList"
     ) {
       JsonFormat.fromJsonString[NonEmptyTypes](j)
     }
