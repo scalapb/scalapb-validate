@@ -1,7 +1,11 @@
 package scalapb.validate.cats
 
 import cats.data.{NonEmptyList, NonEmptyMap, NonEmptySet}
-import e2e.cats.types.{NonEmptyTypes, NonEmptyTypesWithSubRules}
+import e2e.cats.types.{
+  NonEmptyTypes,
+  NonEmptyTypesTesting,
+  NonEmptyTypesWithSubRules
+}
 import scalapb.validate.Success
 import scalapb.validate.Validator
 import scalapb.validate.ValidationHelpers
@@ -17,6 +21,13 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
     nonEmptyList = NonEmptyList.of("bar", "baz"),
     nonEmptyMap = NonEmptyMap.of(3 -> 4)
   )
+
+  val nonEmptyTypesTesting = NonEmptyTypesTesting(
+    nonEmptySet = Seq("foo", "bar"),
+    nonEmptyList = Seq("baz"),
+    nonEmptyMap = Map(3 -> 4)
+  )
+
   test("NonEmptyTypes serialize and parse successfully") {
     assertEquals(
       NonEmptyTypes.parseFrom(nonEmptyTypes.toByteArray),
@@ -117,6 +128,20 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
     ) {
       JsonFormat.fromJsonString[NonEmptyTypes](j)
     }
+  }
+
+  test("Throws exception when non-empty set has duplicate elements") {
+    val n = nonEmptyTypesTesting.withNonEmptySet(Seq("foo", "foo"))
+    interceptMessage[ValidationException](
+      "Got duplicate elements for NonEmptySet"
+    )(NonEmptyTypes.parseFrom(n.toByteArray))
+  }
+
+  test("Throws exception when set has duplicate elements") {
+    val n = nonEmptyTypesTesting.withSet(Seq("foo", "foo"))
+    interceptMessage[ValidationException](
+      "Got duplicate elements for Set"
+    )(NonEmptyTypes.parseFrom(n.toByteArray))
   }
 
   test("all instances serialize and parse to binary") {

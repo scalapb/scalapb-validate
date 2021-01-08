@@ -201,6 +201,10 @@ class ProcessRequest(req: CodeGenRequest) {
         }
         set: {
           collection_type: "_root_.scala.collection.immutable.Set"
+          collection: {
+            type: "_root_.scala.collection.immutable.Set"
+            adapter: "_root_.scalapb.validate.SetAdapter"
+          }
           [scalapb.validate.field] {
             skip_unique_check: true
           }
