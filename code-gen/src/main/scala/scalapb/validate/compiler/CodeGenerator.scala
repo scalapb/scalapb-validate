@@ -274,9 +274,10 @@ class MessagePrinter(
       maybeRequired ++ maybeNested
     } else Seq.empty
 
-    val maybeRequired = Rule.ifSet(RulesGen.isRequired(rulesProto))(
-      SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
-    )
+    val maybeRequired =
+      Rule.ifSet(RulesGen.isRequired(rulesProto) && !fd.noBoxRequired)(
+        SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
+      )
 
     val maybeSingular =
       if (!fd.supportsPresence && !fd.isInOneof && rules.nonEmpty)

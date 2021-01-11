@@ -17,7 +17,15 @@ option (scalapb.validate.package) = {
         {
             when: {int32: {gt: 0}}
             set: {
-              type: "scalapb.transforms.PositiveInt"
+                type: "scalapb.transforms.PositiveInt"
+            }
+        }
+    ]
+    field_transformations: [
+        {
+            when: {message: {required: true}}
+            set: {
+                required: true
             }
         }
     ]
