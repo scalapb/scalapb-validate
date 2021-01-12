@@ -72,6 +72,7 @@ lazy val codeGen = projectMatrix
   .defaultAxes()
   .enablePlugins(BuildInfoPlugin)
   .settings(stdSettings)
+  .settings(munitSettings)
   .settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "scalapb.validate.compiler",
@@ -113,6 +114,7 @@ lazy val e2e = projectMatrix
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.10.2",
       "org.typelevel" %% "cats-core" % "2.3.0",
       "io.undertow" % "undertow-core" % "2.2.3.Final",
+      "eu.timepit" %% "refined" % "0.9.20",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     TestProtosGenerator.generateAllTypesProtoSettings,

@@ -46,6 +46,7 @@ message FieldTransformation {
   enum MatchType {
     CONTAINS = 0;
     EXACT = 1;
+    PRESENCE = 2;
   }
   optional MatchType match_type = 2 [default=CONTAINS];
   optional scalapb.FieldOptions set = 3;

@@ -18,6 +18,8 @@ import java.nio.file.Files
 import scalapb.validate.Validate.FieldTransformation
 import com.google.protobuf.TextFormat
 import scalapb.options.Scalapb.ScalaPbOptions.AuxFieldOptions
+import scalapb.compiler.GeneratorException
+import com.google.protobuf.Descriptors.FieldDescriptor.Type
 
 object ValidatePreprocessor extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
@@ -110,6 +112,7 @@ class ProcessRequest(req: CodeGenRequest) {
     matchType match {
       case MatchType.CONTAINS => msg.toBuilder().mergeFrom(pattern).build == msg
       case MatchType.EXACT    => msg == pattern
+      case MatchType.PRESENCE => ProcessRequest.matchPresence(msg, pattern)
     }
 
   // Given a FieldTranformation and a field (with possibly pgv rules), determine if the
@@ -120,6 +123,7 @@ class ProcessRequest(req: CodeGenRequest) {
       field: FieldDescriptor
   ): Option[AuxFieldOptions] = {
     val fieldRule = field.getOptions().getExtension(Validate.rules)
+    def newOptions = ProcessRequest.interpolateStrings(t.getSet, fieldRule)
     if (
       matches(fieldRule, t.getWhen(), t.getMatchType()) ||
       matches(
@@ -131,7 +135,7 @@ class ProcessRequest(req: CodeGenRequest) {
       Some(
         AuxFieldOptions.newBuilder
           .setTarget(field.getFullName())
-          .setOptions(t.getSet())
+          .setOptions(newOptions)
           .build
       )
     } else {
@@ -149,10 +153,11 @@ class ProcessRequest(req: CodeGenRequest) {
           .setOptions {
             // For convenience we clean up `type` and apply it to map_key and/or map_value
             // depending on where the match happened.
-            val optBuilder = t.getSet().toBuilder()
+            val optBuilder = newOptions.toBuilder
+            val newType = newOptions.getType
             optBuilder.clearType
-            if (matchesMapKey) optBuilder.setKeyType(t.getSet.getType)
-            if (matchesMapValue) optBuilder.setValueType(t.getSet.getType)
+            if (matchesMapKey) optBuilder.setKeyType(newType)
+            if (matchesMapValue) optBuilder.setValueType(newType)
             optBuilder.build()
           }
         Some(b.build)
@@ -239,4 +244,102 @@ class ProcessRequest(req: CodeGenRequest) {
              }
            }""")
     )
+}
+
+object ProcessRequest {
+  private[compiler] def matchPresence[T <: Message](
+      msg: T,
+      pattern: T
+  ): Boolean = {
+    val patternFields = pattern.getAllFields().keySet()
+    msg.getAllFields().keySet().containsAll(patternFields) &&
+    patternFields.asScala.forall { fd =>
+      if (fd.isRepeated())
+        throw new GeneratorException(
+          "Presence matching on repeated fields is not supported"
+        )
+      else if (fd.getType() == Type.MESSAGE)
+        msg.hasField(fd) && matchPresence(
+          msg.getField(fd).asInstanceOf[Message],
+          pattern.getField(fd).asInstanceOf[Message]
+        )
+      else
+        msg.hasField(fd)
+    }
+  }
+
+  private[compiler] def fieldByPath(message: Message, path: String): String =
+    if (path.isEmpty()) throw new GeneratorException("Got an empty path")
+    else
+      fieldByPath(message, path.split('.').toList, path) match {
+        case Left(error)  => throw new GeneratorException(error)
+        case Right(value) => value
+      }
+
+  private[compiler] def fieldByPath(
+      message: Message,
+      path: List[String],
+      allPath: String
+  ): Either[String, String] =
+    for {
+      fieldName <- path.headOption.toRight("Got an empty path")
+      fd <- Option(message.getDescriptorForType().findFieldByName(fieldName))
+        .toRight(
+          s"Could not find field named $fieldName when looking for $allPath"
+        )
+      _ <-
+        if (fd.isRepeated()) Left("Repeated fields are not supported")
+        else Right(())
+      v = message.getField(fd)
+      res <- path match {
+        case _ :: Nil => Right(v.toString())
+        case _ :: tail =>
+          if (fd.getType() == Type.MESSAGE)
+            fieldByPath(v.asInstanceOf[Message], tail, allPath)
+          else
+            Left(
+              s"Type ${fd.getType.toString} does not have a field ${tail.head} in $allPath"
+            )
+        case Nil => Left("Unexpected empty path")
+      }
+    } yield res
+
+  // Substitutes $(path) references in string fields within msg with values coming from the data
+  // message
+  private[compiler] def interpolateStrings[T <: Message](
+      msg: T,
+      data: Message
+  ): T = {
+    val b = msg.toBuilder()
+    for {
+      (field, value) <- msg.getAllFields().asScala
+    } field.getType() match {
+      case Type.STRING if (!field.isRepeated()) =>
+        b.setField(field, interpolate(value.asInstanceOf[String], data))
+      case Type.MESSAGE =>
+        if (field.isRepeated())
+          b.setField(
+            field,
+            value
+              .asInstanceOf[java.util.List[Message]]
+              .asScala
+              .map(interpolateStrings(_, data))
+              .asJava
+          )
+        else
+          b.setField(
+            field,
+            interpolateStrings(value.asInstanceOf[Message], data)
+          )
+      case _ =>
+    }
+    b.build().asInstanceOf[T]
+  }
+
+  val FieldPath: java.util.regex.Pattern =
+    raw"[$$]\(([a-zA-Z0-9_.]*)\)".r.pattern
+
+  // Interpolates paths in the given string with values coming from the data message
+  private[compiler] def interpolate(value: String, data: Message): String =
+    FieldPath.matcher(value).replaceAll(m => fieldByPath(data, m.group(1)))
 }
