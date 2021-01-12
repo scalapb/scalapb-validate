@@ -27,7 +27,7 @@ jobs:
 
     - name: Compile and test
       run: |
-        sbt test "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
+        sbt test "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
 
     - name: Formatting
       run: |
