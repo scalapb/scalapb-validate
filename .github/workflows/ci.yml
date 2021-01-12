@@ -22,9 +22,9 @@ jobs:
     - name: Build test executor
       run: |
         ./make_harness.sh
-
     - uses: olafurpg/setup-scala@v10
-
+      with:
+        java-version: adopt@1.9
     - name: Compile and test
       run: |
         sbt test "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
