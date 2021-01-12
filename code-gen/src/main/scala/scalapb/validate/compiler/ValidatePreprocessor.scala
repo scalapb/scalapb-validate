@@ -165,27 +165,19 @@ class ProcessRequest(req: CodeGenRequest) {
       field: FieldDescriptor
   ): Unit = {
     val packageOptions = cache.get(field.getFile.getPackage())
+    // Set rules done first, since Cats NonEmptySet is more specific and should override.
+    val transformations = (
+      if (packageOptions.getUniqueToSet) SetRules else Nil
+    ) ++ (
+      if (packageOptions.getCatsTransforms) CatsRules else Nil
+    ) ++ packageOptions.getFieldTransformationsList().asScala
+
     b.addAllAuxFieldOptions(
       (for {
-        transform <- packageOptions.getFieldTransformationsList().asScala
+        transform <- transformations
         auxOptions <- auxFieldOptionsForTransformation(transform, field)
       } yield auxOptions).asJava
     )
-    val catsRules =
-      if (packageOptions.getCatsTransforms)
-        CatsRules
-          .flatMap(auxFieldOptionsForTransformation(_, field))
-          .headOption
-      else None
-
-    val setRules =
-      if (packageOptions.getUniqueToSet())
-        SetRules.flatMap(auxFieldOptionsForTransformation(_, field)).headOption
-      else None
-
-    catsRules.orElse(setRules).foreach {
-      b.addAuxFieldOptions(_)
-    }
     ()
   }
 
@@ -214,6 +206,16 @@ class ProcessRequest(req: CodeGenRequest) {
   val CatsRules =
     Seq(
       fieldTransformation("""when: {
+             repeated: {min_items: 1}
+           }
+           set: {
+             collection: {
+               type: "_root_.cats.data.NonEmptyList"
+               adapter: "_root_.scalapb.validate.cats.NonEmptyListAdapter"
+               non_empty: true
+             }
+           }"""),
+      fieldTransformation("""when: {
              repeated: {unique: true, min_items: 1}
            }
            set: {
@@ -224,16 +226,6 @@ class ProcessRequest(req: CodeGenRequest) {
              }
              [scalapb.validate.field] {
                skip_unique_check: true
-             }
-           }"""),
-      fieldTransformation("""when: {
-             repeated: {min_items: 1}
-           }
-           set: {
-             collection: {
-               type: "_root_.cats.data.NonEmptyList"
-               adapter: "_root_.scalapb.validate.cats.NonEmptyListAdapter"
-               non_empty: true
              }
            }"""),
       fieldTransformation("""when: {

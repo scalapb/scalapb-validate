@@ -34,7 +34,7 @@ object PackageOptionsCache {
         proto.getPackage() -> proto
           .getOptions()
           .getExtension(scalapb.validate.Validate.package_)
-    }
+    }.sortBy(_._1.length)
 
     givenPackageOptions.groupBy(_._1).find(_._2.length > 1).foreach { p =>
       throw new GeneratorException(
@@ -56,7 +56,6 @@ object PackageOptionsCache {
       }
       optionsByPackage += pso._1 -> actualOptions
     }
-
-    new PackageOptionsCache(givenPackageOptions.toMap)
+    new PackageOptionsCache(optionsByPackage.toMap)
   }
 }
