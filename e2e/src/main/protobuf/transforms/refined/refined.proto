@@ -33,13 +33,6 @@ option (scalapb.validate.package) = {
     set : {type : "Double Refined Interval.OpenClosed[W.`$(double.gt)`.T, W.`$(double.lte)`.T]"}
     match_type : PRESENCE
   } ]
-
-  field_transformations : [ {
-    when : {enum : {const: 1}}
-    set : {type : "Equal[$(.type). Double Refined Interval.OpenClosed[W.`$(double.gt)`.T, W.`$(double.lte)`.T]"}
-    match_type : PRESENCE
-  } ]
-
 };
 
 message RefinedTest {
