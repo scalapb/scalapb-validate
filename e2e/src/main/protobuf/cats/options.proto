@@ -4,6 +4,7 @@ package e2e.cats;
 
 import "scalapb/scalapb.proto";
 import "scalapb/validate.proto";
+import "validate/validate.proto";
 
 option (scalapb.options) = {
     scope: PACKAGE

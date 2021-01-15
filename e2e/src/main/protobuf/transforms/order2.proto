@@ -2,16 +2,15 @@ syntax = "proto2";
 
 package scalapb.transforms.order.order2;
 
-import "scalapb/validate.proto";
+import "scalapb/scalapb.proto";
+import "validate/validate.proto";
 
-option (scalapb.validate.package) = {
-    field_transformations: [
-        {
-            when: {int32: {gt: 0}}
-            set: {
-                type: "ShouldNotCompile"
-                scala_name: "bam"
-            }
-        }
-    ]
+option (scalapb.options) = {
+  scope : PACKAGE
+  field_transformations : [ {
+    when : {
+      [validate.rules]{int32 : {gt : 0}}
+    }
+    set : {type : "ShouldNotCompile" scala_name : "bam"}
+  } ]
 };

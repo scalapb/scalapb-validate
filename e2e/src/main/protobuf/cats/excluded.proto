@@ -2,12 +2,11 @@ syntax = "proto3";
 
 package e2e.cats;
 
-import "scalapb/validate.proto";
-import "validate/validate.proto";
 import "scalapb/scalapb.proto";
+import "validate/validate.proto";
 
 option (scalapb.options) = {
-    preprocessors: ["-scalapb-validate-preprocessor"]
+    ignore_field_transformations: true
 };
 message Excluded {
   repeated string non_empty_set   = 2 [(validate.rules).repeated = { min_items: 1, unique: true }];

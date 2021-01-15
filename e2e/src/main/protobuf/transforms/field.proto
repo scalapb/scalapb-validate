@@ -5,8 +5,6 @@ package scalapb.transforms;
 import "validate/validate.proto";
 import "scalapb/scalapb.proto";
 
-option (scalapb.options) = {preprocessors: ["scalapb-validate-preprocessor"]};
-
 message MyTestMessage {
     int32 opt_pos_num = 1 [(validate.rules) = {int32: {gt: 0}}];
     repeated int32 rep_pos_num = 2 [(validate.rules).repeated.items.int32 = {gt: 0}];

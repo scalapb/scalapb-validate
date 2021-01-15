@@ -40,24 +40,9 @@ message FieldValidationOptions {
   optional bool skip_unique_check = 1;  // not implemented yet
 }
 
-// Preprocessor options
-message FieldTransformation {
-  optional .validate.FieldRules when = 1;
-  enum MatchType {
-    CONTAINS = 0;
-    EXACT = 1;
-    PRESENCE = 2;
-  }
-  optional MatchType match_type = 2 [default=CONTAINS];
-  optional scalapb.FieldOptions set = 3;
-}
-
 message PackageOptions {
-  repeated FieldTransformation field_transformations = 1;
-
-  optional bool unique_to_set   = 2;  // transform "repeated.unique: true" to sets.
-  optional bool cats_transforms = 3;  // transform to non-empty map, list and set.
-
+  optional bool unique_to_set   = 1;  // transform "repeated.unique: true" to sets.
+  optional bool cats_transforms = 2;  // transform to non-empty map, list and set.
 }
 
 extend google.protobuf.FileOptions {

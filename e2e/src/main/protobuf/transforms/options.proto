@@ -3,19 +3,18 @@ syntax = "proto2";
 package scalapb.transforms;
 
 import "scalapb/scalapb.proto";
+import "validate/validate.proto";
 import "scalapb/validate.proto";
 
 option (scalapb.options) = {
     scope: PACKAGE
+    preprocessors: ["scalapb-validate-preprocessor"]
     [scalapb.validate.file] {
         validate_at_construction: true
     }
-};
-
-option (scalapb.validate.package) = {
     field_transformations: [
         {
-            when: {int32: {gt: 0}}
+            when: {[validate.rules] { int32: {gt: 0}} }
             set: {
                 type: "scalapb.transforms.PositiveInt"
             }
@@ -23,12 +22,15 @@ option (scalapb.validate.package) = {
     ]
     field_transformations: [
         {
-            when: {message: {required: true}}
+            when: {[validate.rules] { message: {required: true}} }
             set: {
                 required: true
             }
         }
     ]
+};
+
+option (scalapb.validate.package) = {
     cats_transforms: true
     unique_to_set: true
 };

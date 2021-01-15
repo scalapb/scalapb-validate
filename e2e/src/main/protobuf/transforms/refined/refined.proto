@@ -13,24 +13,20 @@ option (scalapb.options) = {
   import : "eu.timepit.refined.numeric._"
   import : "eu.timepit.refined.generic._"
   import : "shapeless.{Witness => W}"
-};
 
-option (scalapb.validate.package) = {
   field_transformations : [ {
-    when : {int32 : {gt : 1}}
-    set : {type : "Int Refined Greater[W.`$(int32.gt)`.T]"}
+    when : {[validate.rules] { int32 : {gt : 1}}}
+    set : {type : "Int Refined Greater[W.`$([validate.rules].int32.gt)`.T]"}
     match_type : PRESENCE
-  } ]
-
-  field_transformations : [ {
-    when : {int32 : {const : 1}}
-    set : {type : "Int Refined Equal[W.`$(int32.const)`.T]"}
+  },
+  {
+    when : {[validate.rules] { int32 : {const : 1}}}
+    set : {type : "Int Refined Equal[W.`$([validate.rules].int32.const)`.T]"}
     match_type : PRESENCE
-  } ]
-
-  field_transformations : [ {
-    when : {double : {gt : 1, lte: 1}}
-    set : {type : "Double Refined Interval.OpenClosed[W.`$(double.gt)`.T, W.`$(double.lte)`.T]"}
+  },
+  {
+    when : {[validate.rules] { double : {gt : 1, lte: 1}}}
+    set : {type : "Double Refined Interval.OpenClosed[W.`$([validate.rules].double.gt)`.T, W.`$([validate.rules].double.lte)`.T]"}
     match_type : PRESENCE
   } ]
 };

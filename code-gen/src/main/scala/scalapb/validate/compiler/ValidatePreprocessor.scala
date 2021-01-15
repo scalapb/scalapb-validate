@@ -7,19 +7,18 @@ import io.envoyproxy.pgv.validate.Validate
 import protocbridge.Artifact
 import com.google.protobuf.Descriptors.FileDescriptor
 import scala.jdk.CollectionConverters._
-import com.google.protobuf.Descriptors.Descriptor
-import com.google.protobuf.Descriptors.FieldDescriptor
-import scalapb.validate.Validate.FieldTransformation.MatchType
 import scalapb.options.Scalapb.Collection
 import com.google.protobuf.Message
-import scalapb.options.Scalapb.PreprocesserOutput
+import scalapb.options.Scalapb.PreprocessorOutput
 import scalapb.options.Scalapb.ScalaPbOptions
 import java.nio.file.Files
-import scalapb.validate.Validate.FieldTransformation
+import scalapb.options.Scalapb.FieldTransformation
 import com.google.protobuf.TextFormat
-import scalapb.options.Scalapb.ScalaPbOptions.AuxFieldOptions
 import scalapb.compiler.GeneratorException
 import com.google.protobuf.Descriptors.FieldDescriptor.Type
+import io.envoyproxy.pgv.validate.Validate.FieldRules
+import io.envoyproxy.pgv.validate.Validate.RepeatedRules
+import io.envoyproxy.pgv.validate.Validate.MapRules
 
 object ValidatePreprocessor extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
@@ -83,108 +82,99 @@ class ProcessRequest(req: CodeGenRequest) {
   def processFile(file: FileDescriptor): Option[ScalaPbOptions] = {
     val b = Scalapb.ScalaPbOptions.newBuilder()
 
-    file.getMessageTypes().asScala.foreach(processMessage(b, _))
+    val packageOptions = cache.get(file.getPackage())
+    // Set rules done first, since Cats NonEmptySet is more specific and should override.
+    val ts = (
+      if (packageOptions.getUniqueToSet) SetRules else Nil
+    ) ++ (
+      if (packageOptions.getCatsTransforms) CatsRules else Nil
+    )
+
+    b.addAllFieldTransformations(ts.asJava)
+    b.addAllFieldTransformations(
+      file
+        .getOptions()
+        .getExtension(Scalapb.options)
+        .getFieldTransformationsList()
+        .asScala
+        .flatMap(expandTransformation(_))
+        .asJava
+    )
+
     val result = b.build()
 
     if (result.getSerializedSize() != 0) Some(result) else None
   }
 
-  def result(): PreprocesserOutput = {
+  def result(): PreprocessorOutput = {
     val outs = req.allProtos.map(f => (f.getName(), processFile(f))).collect {
       case (name, Some(out)) => name -> out
     }
 
-    scalapb.options.Scalapb.PreprocesserOutput
+    scalapb.options.Scalapb.PreprocessorOutput
       .newBuilder()
       .putAllOptionsByFile(outs.toMap.asJava)
       .build()
   }
 
-  def processMessage(
-      builder: ScalaPbOptions.Builder,
-      message: Descriptor
-  ): Unit = {
-    message.getNestedTypes().asScala.foreach(processMessage(builder, _))
-    message.getFields().asScala.foreach(processField(builder, _))
-  }
+  def expandTransformation(t: FieldTransformation): Seq[FieldTransformation] =
+    if (!t.getWhen().hasExtension(Validate.rules)) Seq.empty
+    else {
+      val fieldRules = t.getWhen.getExtension(Validate.rules)
+      if (fieldRules.hasRepeated() || fieldRules.hasMap()) Seq.empty
+      else {
+        val rep = t
+          .toBuilder()
+          .clearWhen()
+        rep
+          .getWhenBuilder()
+          .setExtension(
+            Validate.rules,
+            FieldRules
+              .newBuilder()
+              .setRepeated(RepeatedRules.newBuilder.setItems(fieldRules))
+              .build()
+          )
 
-  def matches[T <: Message](msg: T, pattern: T, matchType: MatchType): Boolean =
-    matchType match {
-      case MatchType.CONTAINS => msg.toBuilder().mergeFrom(pattern).build == msg
-      case MatchType.EXACT    => msg == pattern
-      case MatchType.PRESENCE => ProcessRequest.matchPresence(msg, pattern)
+        val mapKey = t
+          .toBuilder()
+          .clearWhen()
+        if (t.getSet.hasType()) {
+          mapKey.getSetBuilder().clearType()
+            .setKeyType(t.getSet.getType())
+        }
+        mapKey
+          .getWhenBuilder()
+          .setExtension(
+            Validate.rules,
+            FieldRules
+              .newBuilder()
+              .setMap(MapRules.newBuilder.setKeys(fieldRules).build())
+              .build()
+          )
+
+        val mapValue = t
+          .toBuilder()
+          .clearWhen()
+        mapValue.getSetBuilder().clearType()
+          .setKeyType(t.getSet.getType())
+        if (t.getSet.hasType()) {
+          mapValue.getSetBuilder().clearType()
+            .setValueType(t.getSet.getType())
+        }
+        mapValue
+          .getWhenBuilder()
+          .setExtension(
+            Validate.rules,
+            FieldRules
+              .newBuilder()
+              .setMap(MapRules.newBuilder.setValues(fieldRules).build())
+              .build()
+          )
+
+        Seq(rep.build(), mapKey.build(), mapValue.build())
+      }
     }
-
-  // Given a FieldTranformation and a field (with possibly pgv rules), determine if the
-  // transformation applies using the `when` condition, and if so returns Some(auxFieldOptios)
-  // that describe an update to this field ScalaPB options.
-  def auxFieldOptionsForTransformation(
-      t: FieldTransformation,
-      field: FieldDescriptor
-  ): Option[AuxFieldOptions] = {
-    val fieldRule = field.getOptions().getExtension(Validate.rules)
-    def newOptions = ProcessRequest.interpolateStrings(t.getSet, fieldRule)
-    if (
-      matches(fieldRule, t.getWhen(), t.getMatchType()) ||
-      matches(
-        fieldRule.getRepeated().getItems(),
-        t.getWhen(),
-        t.getMatchType()
-      )
-    ) {
-      Some(
-        AuxFieldOptions.newBuilder
-          .setTarget(field.getFullName())
-          .setOptions(newOptions)
-          .build
-      )
-    } else {
-      val matchesMapKey =
-        matches(fieldRule.getMap().getKeys(), t.getWhen(), t.getMatchType())
-      val matchesMapValue = matches(
-        fieldRule.getMap().getValues(),
-        t.getWhen(),
-        t.getMatchType()
-      )
-      if (matchesMapKey || matchesMapValue) {
-        val b = AuxFieldOptions
-          .newBuilder()
-          .setTarget(field.getFullName())
-          .setOptions {
-            // For convenience we clean up `type` and apply it to map_key and/or map_value
-            // depending on where the match happened.
-            val optBuilder = newOptions.toBuilder
-            val newType = newOptions.getType
-            optBuilder.clearType
-            if (matchesMapKey) optBuilder.setKeyType(newType)
-            if (matchesMapValue) optBuilder.setValueType(newType)
-            optBuilder.build()
-          }
-        Some(b.build)
-      } else None
-    }
-  }
-
-  def processField(
-      b: ScalaPbOptions.Builder,
-      field: FieldDescriptor
-  ): Unit = {
-    val packageOptions = cache.get(field.getFile.getPackage())
-    // Set rules done first, since Cats NonEmptySet is more specific and should override.
-    val transformations = (
-      if (packageOptions.getUniqueToSet) SetRules else Nil
-    ) ++ (
-      if (packageOptions.getCatsTransforms) CatsRules else Nil
-    ) ++ packageOptions.getFieldTransformationsList().asScala
-
-    b.addAllAuxFieldOptions(
-      (for {
-        transform <- transformations
-        auxOptions <- auxFieldOptionsForTransformation(transform, field)
-      } yield auxOptions).asJava
-    )
-    ()
-  }
 
   def fieldTransformation(s: String): FieldTransformation = {
     val er = ExtensionRegistry.newInstance()
@@ -194,7 +184,9 @@ class ProcessRequest(req: CodeGenRequest) {
 
   val SetRules = Seq(
     fieldTransformation("""when: {
-          repeated: {unique: true}
+          [validate.rules] {
+            repeated: {unique: true}
+          }
         }
         set: {
           collection_type: "_root_.scala.collection.immutable.Set"
@@ -211,7 +203,9 @@ class ProcessRequest(req: CodeGenRequest) {
   val CatsRules =
     Seq(
       fieldTransformation("""when: {
-             repeated: {min_items: 1}
+             [validate.rules] {
+               repeated: {min_items: 1}
+             }
            }
            set: {
              collection: {
@@ -221,7 +215,9 @@ class ProcessRequest(req: CodeGenRequest) {
              }
            }"""),
       fieldTransformation("""when: {
-             repeated: {unique: true, min_items: 1}
+             [validate.rules] {
+               repeated: {unique: true, min_items: 1}
+             }
            }
            set: {
              collection: {
@@ -234,7 +230,9 @@ class ProcessRequest(req: CodeGenRequest) {
              }
            }"""),
       fieldTransformation("""when: {
-             map: {min_pairs: 1}
+             [validate.rules] {
+               map: {min_pairs: 1}
+             }
            }
            set: {
              collection: {

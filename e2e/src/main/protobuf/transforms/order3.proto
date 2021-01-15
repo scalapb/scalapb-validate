@@ -6,22 +6,19 @@ import "scalapb/scalapb.proto";
 import "scalapb/validate.proto";
 import "validate/validate.proto";
 
-option (scalapb.options) = {preprocessors: ["scalapb-validate-preprocessor"]};
-
-// This test verifies that the last transformation that matches overrides the previous ones
-option (scalapb.validate.package) = {
-    field_transformations: [
-        {
-            when: {int32: {gt: 0}}
-            set: {
-                type: "scalapb.transforms.PositiveInt"
-            }
-        }
-    ]
+// This test verifies that the last transformation that matches overrides the
+// previous ones
+option (scalapb.options) = {
+  field_transformations : {
+    when : {
+      [validate.rules]{int32 : {gt : 0}}
+    }
+    set : {type : "scalapb.transforms.PositiveInt"}
+  }
 };
 
 message TestMessage {
-    // Shold be named Bam (from order2), the local type "PositiveInt" should override
-    // ShouldNotCompile from the upper levels.
-    optional int32 x = 1 [(.validate.rules).int32 = {gt: 0} ];
+  // Shold be named Bam (from order2), the local type "PositiveInt" should
+  // override ShouldNotCompile from the upper levels.
+  optional int32 x = 1 [ (.validate.rules).int32 = {gt : 0} ];
 }
