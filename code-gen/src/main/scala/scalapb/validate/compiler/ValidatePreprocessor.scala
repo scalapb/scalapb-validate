@@ -8,14 +8,11 @@ import protocbridge.Artifact
 import com.google.protobuf.Descriptors.FileDescriptor
 import scala.jdk.CollectionConverters._
 import scalapb.options.Scalapb.Collection
-import com.google.protobuf.Message
 import scalapb.options.Scalapb.PreprocessorOutput
 import scalapb.options.Scalapb.ScalaPbOptions
 import java.nio.file.Files
 import scalapb.options.Scalapb.FieldTransformation
 import com.google.protobuf.TextFormat
-import scalapb.compiler.GeneratorException
-import com.google.protobuf.Descriptors.FieldDescriptor.Type
 import io.envoyproxy.pgv.validate.Validate.FieldRules
 import io.envoyproxy.pgv.validate.Validate.RepeatedRules
 import io.envoyproxy.pgv.validate.Validate.MapRules
@@ -140,7 +137,9 @@ class ProcessRequest(req: CodeGenRequest) {
           .toBuilder()
           .clearWhen()
         if (t.getSet.hasType()) {
-          mapKey.getSetBuilder().clearType()
+          mapKey
+            .getSetBuilder()
+            .clearType()
             .setKeyType(t.getSet.getType())
         }
         mapKey
@@ -156,10 +155,14 @@ class ProcessRequest(req: CodeGenRequest) {
         val mapValue = t
           .toBuilder()
           .clearWhen()
-        mapValue.getSetBuilder().clearType()
+        mapValue
+          .getSetBuilder()
+          .clearType()
           .setKeyType(t.getSet.getType())
         if (t.getSet.hasType()) {
-          mapValue.getSetBuilder().clearType()
+          mapValue
+            .getSetBuilder()
+            .clearType()
             .setValueType(t.getSet.getType())
         }
         mapValue
@@ -242,102 +245,4 @@ class ProcessRequest(req: CodeGenRequest) {
              }
            }""")
     )
-}
-
-object ProcessRequest {
-  private[compiler] def matchPresence[T <: Message](
-      msg: T,
-      pattern: T
-  ): Boolean = {
-    val patternFields = pattern.getAllFields().keySet()
-    msg.getAllFields().keySet().containsAll(patternFields) &&
-    patternFields.asScala.forall { fd =>
-      if (fd.isRepeated())
-        throw new GeneratorException(
-          "Presence matching on repeated fields is not supported"
-        )
-      else if (fd.getType() == Type.MESSAGE)
-        msg.hasField(fd) && matchPresence(
-          msg.getField(fd).asInstanceOf[Message],
-          pattern.getField(fd).asInstanceOf[Message]
-        )
-      else
-        msg.hasField(fd)
-    }
-  }
-
-  private[compiler] def fieldByPath(message: Message, path: String): String =
-    if (path.isEmpty()) throw new GeneratorException("Got an empty path")
-    else
-      fieldByPath(message, path.split('.').toList, path) match {
-        case Left(error)  => throw new GeneratorException(error)
-        case Right(value) => value
-      }
-
-  private[compiler] def fieldByPath(
-      message: Message,
-      path: List[String],
-      allPath: String
-  ): Either[String, String] =
-    for {
-      fieldName <- path.headOption.toRight("Got an empty path")
-      fd <- Option(message.getDescriptorForType().findFieldByName(fieldName))
-        .toRight(
-          s"Could not find field named $fieldName when looking for $allPath"
-        )
-      _ <-
-        if (fd.isRepeated()) Left("Repeated fields are not supported")
-        else Right(())
-      v = message.getField(fd)
-      res <- path match {
-        case _ :: Nil => Right(v.toString())
-        case _ :: tail =>
-          if (fd.getType() == Type.MESSAGE)
-            fieldByPath(v.asInstanceOf[Message], tail, allPath)
-          else
-            Left(
-              s"Type ${fd.getType.toString} does not have a field ${tail.head} in $allPath"
-            )
-        case Nil => Left("Unexpected empty path")
-      }
-    } yield res
-
-  // Substitutes $(path) references in string fields within msg with values coming from the data
-  // message
-  private[compiler] def interpolateStrings[T <: Message](
-      msg: T,
-      data: Message
-  ): T = {
-    val b = msg.toBuilder()
-    for {
-      (field, value) <- msg.getAllFields().asScala
-    } field.getType() match {
-      case Type.STRING if (!field.isRepeated()) =>
-        b.setField(field, interpolate(value.asInstanceOf[String], data))
-      case Type.MESSAGE =>
-        if (field.isRepeated())
-          b.setField(
-            field,
-            value
-              .asInstanceOf[java.util.List[Message]]
-              .asScala
-              .map(interpolateStrings(_, data))
-              .asJava
-          )
-        else
-          b.setField(
-            field,
-            interpolateStrings(value.asInstanceOf[Message], data)
-          )
-      case _ =>
-    }
-    b.build().asInstanceOf[T]
-  }
-
-  val FieldPath: java.util.regex.Pattern =
-    raw"[$$]\(([a-zA-Z0-9_.]*)\)".r.pattern
-
-  // Interpolates paths in the given string with values coming from the data message
-  private[compiler] def interpolate(value: String, data: Message): String =
-    FieldPath.matcher(value).replaceAll(m => fieldByPath(data, m.group(1)))
 }

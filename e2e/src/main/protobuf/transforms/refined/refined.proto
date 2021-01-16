@@ -4,7 +4,6 @@ syntax = "proto3";
 package scalapb.transforms.refined;
 
 import "validate/validate.proto";
-import "scalapb/validate.proto";
 import "scalapb/scalapb.proto";
 
 option (scalapb.options) = {

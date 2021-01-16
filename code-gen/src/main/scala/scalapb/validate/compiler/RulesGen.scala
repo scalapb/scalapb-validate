@@ -15,7 +15,7 @@ object RulesGen {
       fd: FieldDescriptor,
       rules: FieldRules,
       implicits: DescriptorImplicits
-  ): Seq[Rule] = {
+  ): Seq[Rule] =
     rules.`type` match {
       case Type.String(stringRules) =>
         StringRulesGen.stringRules(fd, stringRules)
@@ -85,7 +85,6 @@ object RulesGen {
 
       case _ => Seq.empty
     }
-  }
 
   def isRequired(rules: FieldRules): Boolean =
     rules.getMessage.getRequired || (rules.`type` match {
