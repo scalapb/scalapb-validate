@@ -6,7 +6,7 @@ import "scalapb/scalapb.proto";
 import "validate/validate.proto";
 
 option (scalapb.options) = {
-    ignore_field_transformations: true
+    ignore_all_transformations: true
 };
 message Excluded {
   repeated string non_empty_set   = 2 [(validate.rules).repeated = { min_items: 1, unique: true }];
