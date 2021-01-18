@@ -2,11 +2,7 @@ syntax = "proto2";
 
 package scalapb.validate;
 
-import "google/protobuf/descriptor.proto";
-import "validate/validate.proto";
 import "scalapb/scalapb.proto";
-
-// import "validate/validate.proto";
 
 // Field number 1089 has been assigned to ScalaPB-validate in
 // https://github.com/protocolbuffers/protobuf/pull/8111
@@ -28,6 +24,24 @@ extend scalapb.FieldOptions {
 message FileValidationOptions {
   optional bool insert_validator_instance = 1 [default=true];
   optional bool validate_at_construction = 2  [default=false];
+
+  // The following options inject field transformations in the proto they are defined on.
+  // In order to take effect, scalapb-validate's preprocessor need to be enabled in the same
+  // file where these options are set. Example:
+  //
+  // import "scalapb/validate.proto";
+  // import "scalapb/scalapb.proto";
+  //
+  // option (scalapb.options) = {
+  //   scope : PACKAGE   // makes the FieldTransformations available for the entire package
+  //   preprocessors : [ "scalapb-validate-preprocessor" ]
+  //   [scalapb.validate.file] {
+  //     cats_transforms : true
+  //     unique_to_set : true
+  //   }
+  // }
+  optional bool unique_to_set   = 3;  // transform "repeated.unique: true" to sets.
+  optional bool cats_transforms = 4;  // transform to non-empty map, list and set.
 }
 
 // Falls back on file validation options (where default exists)
@@ -40,11 +54,10 @@ message FieldValidationOptions {
   optional bool skip_unique_check = 1;  // not implemented yet
 }
 
-message PackageOptions {
-  optional bool unique_to_set   = 1;  // transform "repeated.unique: true" to sets.
-  optional bool cats_transforms = 2;  // transform to non-empty map, list and set.
-}
-
-extend google.protobuf.FileOptions {
-  optional PackageOptions package = 1089;
+// When field transformations are enabled, ScalaPB will attempt to find validate's extension.
+// It searches in the file's imports recursively. To make sure `validate/validate.proto` is
+// found we include it here. The Dummy message below avoids an "unused import" warning.
+import "validate/validate.proto";
+message Dummy {
+  optional .validate.FieldRules dummy = 1;
 }

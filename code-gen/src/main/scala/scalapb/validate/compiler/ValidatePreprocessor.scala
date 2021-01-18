@@ -73,18 +73,18 @@ object ValidatePreprocessor extends CodeGenApp {
 }
 
 class ProcessRequest(req: CodeGenRequest) {
-
-  val cache = PackageOptionsCache.from(req.allProtos)
-
   def processFile(file: FileDescriptor): Option[ScalaPbOptions] = {
     val b = Scalapb.ScalaPbOptions.newBuilder()
 
-    val packageOptions = cache.get(file.getPackage())
+    val validateOptions = file
+      .getOptions()
+      .getExtension(Scalapb.options)
+      .getExtension(scalapb.validate.Validate.file)
     // Set rules done first, since Cats NonEmptySet is more specific and should override.
     val ts = (
-      if (packageOptions.getUniqueToSet) SetRules else Nil
+      if (validateOptions.getUniqueToSet) SetRules else Nil
     ) ++ (
-      if (packageOptions.getCatsTransforms) CatsRules else Nil
+      if (validateOptions.getCatsTransforms) CatsRules else Nil
     )
 
     b.addAllFieldTransformations(ts.asJava)

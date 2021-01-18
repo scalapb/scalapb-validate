@@ -9,7 +9,11 @@ import "scalapb/validate.proto";
 option (scalapb.options) = {
   scope : PACKAGE
   preprocessors : [ "scalapb-validate-preprocessor" ]
-  [scalapb.validate.file]{validate_at_construction : true}
+  [scalapb.validate.file]{
+    validate_at_construction : true
+    cats_transforms : true
+    unique_to_set : true
+  }
   field_transformations : [ {
     when : {
       [validate.rules]{int32 : {gt : 0}}
@@ -22,9 +26,4 @@ option (scalapb.options) = {
     }
     set : {required : true}
   } ]
-};
-
-option (scalapb.validate.package) = {
-  cats_transforms : true
-  unique_to_set : true
 };
