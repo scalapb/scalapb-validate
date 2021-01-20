@@ -115,16 +115,22 @@ class ProcessRequest(req: CodeGenRequest) {
   }
 
   def expandTransformation(t: FieldTransformation): Seq[FieldTransformation] =
-    if (!t.getWhen().hasExtension(Validate.rules)) Seq.empty
+    if (!t.getWhen().getOptions().hasExtension(Validate.rules)) Seq.empty
     else {
-      val fieldRules = t.getWhen.getExtension(Validate.rules)
+      val fieldRules = t.getWhen.getOptions().getExtension(Validate.rules)
       if (fieldRules.hasRepeated() || fieldRules.hasMap()) Seq.empty
       else {
         val rep = t
           .toBuilder()
-          .clearWhen()
+
         rep
           .getWhenBuilder()
+          .getOptionsBuilder()
+          .clearExtension(Validate.rules)
+
+        rep
+          .getWhenBuilder()
+          .getOptionsBuilder()
           .setExtension(
             Validate.rules,
             FieldRules
@@ -133,17 +139,33 @@ class ProcessRequest(req: CodeGenRequest) {
               .build()
           )
 
-        val mapKey = t
+        val hasScalaType = t.getSet.getExtension(Scalapb.field).hasType()
+        val scalaType = t.getSet.getExtension(Scalapb.field).getType()
+
+        val mapKeyBuilder = t
           .toBuilder()
-          .clearWhen()
-        if (t.getSet.hasType()) {
-          mapKey
-            .getSetBuilder()
-            .clearType()
-            .setKeyType(t.getSet.getType())
-        }
-        mapKey
+
+        mapKeyBuilder
           .getWhenBuilder()
+          .getOptionsBuilder()
+          .clearExtension(Validate.rules)
+
+        if (hasScalaType) {
+          mapKeyBuilder
+            .getSetBuilder()
+            .setExtension(
+              Scalapb.field,
+              t.getSet
+                .getExtension(Scalapb.field)
+                .toBuilder
+                .clearType()
+                .setKeyType(scalaType)
+                .build()
+            )
+        }
+        mapKeyBuilder
+          .getWhenBuilder()
+          .getOptionsBuilder()
           .setExtension(
             Validate.rules,
             FieldRules
@@ -152,21 +174,30 @@ class ProcessRequest(req: CodeGenRequest) {
               .build()
           )
 
-        val mapValue = t
+        val mapValueBuilder = t
           .toBuilder()
-          .clearWhen()
-        mapValue
-          .getSetBuilder()
-          .clearType()
-          .setKeyType(t.getSet.getType())
-        if (t.getSet.hasType()) {
-          mapValue
-            .getSetBuilder()
-            .clearType()
-            .setValueType(t.getSet.getType())
-        }
-        mapValue
+        mapValueBuilder
           .getWhenBuilder()
+          .getOptionsBuilder()
+          .clearExtension(Validate.rules)
+
+        if (hasScalaType) {
+          mapValueBuilder
+            .getSetBuilder()
+            .setExtension(
+              Scalapb.field,
+              t.getSet
+                .getExtension(Scalapb.field)
+                .toBuilder
+                .clearType()
+                .setValueType(scalaType)
+                .build()
+            )
+        }
+
+        mapValueBuilder
+          .getWhenBuilder()
+          .getOptionsBuilder()
           .setExtension(
             Validate.rules,
             FieldRules
@@ -175,7 +206,7 @@ class ProcessRequest(req: CodeGenRequest) {
               .build()
           )
 
-        Seq(rep.build(), mapKey.build(), mapValue.build())
+        Seq(rep.build(), mapKeyBuilder.build(), mapValueBuilder.build())
       }
     }
 
@@ -187,18 +218,22 @@ class ProcessRequest(req: CodeGenRequest) {
 
   val SetRules = Seq(
     fieldTransformation("""when: {
-          [validate.rules] {
-            repeated: {unique: true}
+          options {
+            [validate.rules] {
+              repeated: {unique: true}
+            }
           }
         }
         set: {
-          collection_type: "_root_.scala.collection.immutable.Set"
-          collection: {
-            type: "_root_.scala.collection.immutable.Set"
-            adapter: "_root_.scalapb.validate.SetAdapter"
-          }
-          [scalapb.validate.field] {
-            skip_unique_check: true
+          [scalapb.field] {
+            collection_type: "_root_.scala.collection.immutable.Set"
+            collection: {
+              type: "_root_.scala.collection.immutable.Set"
+              adapter: "_root_.scalapb.validate.SetAdapter"
+            }
+            [scalapb.validate.field] {
+              skip_unique_check: true
+            }
           }
         }""".stripMargin)
   )
@@ -206,42 +241,54 @@ class ProcessRequest(req: CodeGenRequest) {
   val CatsRules =
     Seq(
       fieldTransformation("""when: {
-             [validate.rules] {
-               repeated: {min_items: 1}
+             options {
+               [validate.rules] {
+                 repeated: {min_items: 1}
+               }
              }
            }
            set: {
-             collection: {
-               type: "_root_.cats.data.NonEmptyList"
-               adapter: "_root_.scalapb.validate.cats.NonEmptyListAdapter"
-               non_empty: true
+             [scalapb.field] {
+               collection: {
+                 type: "_root_.cats.data.NonEmptyList"
+                 adapter: "_root_.scalapb.validate.cats.NonEmptyListAdapter"
+                 non_empty: true
+               }
              }
            }"""),
       fieldTransformation("""when: {
-             [validate.rules] {
-               repeated: {unique: true, min_items: 1}
+             options {
+               [validate.rules] {
+                 repeated: {unique: true, min_items: 1}
+               }
              }
            }
            set: {
-             collection: {
-               type: "_root_.cats.data.NonEmptySet"
-               adapter: "_root_.scalapb.validate.cats.NonEmptySetAdapter"
-               non_empty: true
-             }
-             [scalapb.validate.field] {
-               skip_unique_check: true
+             [scalapb.field] {
+               collection: {
+                 type: "_root_.cats.data.NonEmptySet"
+                 adapter: "_root_.scalapb.validate.cats.NonEmptySetAdapter"
+                 non_empty: true
+               }
+               [scalapb.validate.field] {
+                 skip_unique_check: true
+               }
              }
            }"""),
       fieldTransformation("""when: {
-             [validate.rules] {
-               map: {min_pairs: 1}
+             options {
+               [validate.rules] {
+                 map: {min_pairs: 1}
+               }
              }
            }
            set: {
-             collection: {
-               type: "_root_.cats.data.NonEmptyMap"
-               adapter: "_root_.scalapb.validate.cats.NonEmptyMapAdapter"
-               non_empty: true
+             [scalapb.field] {
+               collection: {
+                 type: "_root_.cats.data.NonEmptyMap"
+                 adapter: "_root_.scalapb.validate.cats.NonEmptyMapAdapter"
+                 non_empty: true
+               }
              }
            }""")
     )

@@ -9,8 +9,10 @@ option (scalapb.options) = {
   scope : PACKAGE
   field_transformations : [ {
     when : {
-      [validate.rules]{int32 : {gt : 0}}
+      options {
+          [validate.rules]{int32 : {gt : 0}}
+      }
     }
-    set : {type : "ShouldNotCompile" scala_name : "bam"}
+    set : { [scalapb.field] { type : "ShouldNotCompile" scala_name : "bam"}}
   } ]
 };

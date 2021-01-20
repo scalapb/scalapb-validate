@@ -16,9 +16,9 @@ message MyTestMessage {
             }
     ];
     map<int32, int32> map_pos_nums = 4 [
-        (validate.rules).map.keys.int32 = {gt: 0},
-        (validate.rules).map.values.int32 = {gt: 0}
-    ];
+      (validate.rules).map.keys.int32 = {gt: 0},
+      (validate.rules).map.values.int32 = {gt: 0}
+    ]; 
     int32 foo = 5 [(validate.rules).int32 = {gt: -5}];
 }
 

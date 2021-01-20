@@ -15,15 +15,19 @@ option (scalapb.options) = {
     unique_to_set : true
   }
   field_transformations : [ {
-    when : {
-      [validate.rules]{int32 : {gt : 0}}
+    when {
+      options {
+        [validate.rules]{int32 : {gt : 0}}
+      }
     }
-    set : {type : "scalapb.transforms.PositiveInt"}
+    set : {[scalapb.field] {type : "scalapb.transforms.PositiveInt"}}
   } ]
   field_transformations : [ {
-    when : {
-      [validate.rules]{message : {required : true}}
+    when {
+      options {
+          [validate.rules]{message : {required : true}}
+      }
     }
-    set : {required : true}
+    set : {[scalapb.field] {required : true}}
   } ]
 };

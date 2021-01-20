@@ -13,21 +13,27 @@ option (scalapb.options) = {
   // previous ones
   field_transformations : [ {
     when : {
-      [validate.rules]{int32 : {gt : 0}}
+      options {
+          [validate.rules]{int32 : {gt : 0}}
+      }
     }
-    set : {type : "UndefinedTypeShouldNotCompile"}
+    set : {[scalapb.field] {type : "UndefinedTypeShouldNotCompile"}}
   } ]
   field_transformations : [ {
     when : {
-      [validate.rules]{int32 : {gt : 0}}
+      options {
+          [validate.rules]{int32 : {gt : 0}}
+      }
     }
-    set : {type : "UndefinedTypeShouldAlsoNotCompile"}
+    set : {[scalapb.field] { type : "UndefinedTypeShouldAlsoNotCompile"}}
   } ]
   field_transformations : [ {
     when : {
-      [validate.rules]{int32 : {gt : 0}}
+      options {
+        [validate.rules]{int32 : {gt : 0}}
+      }
     }
-    set : {type : "scalapb.transforms.PositiveInt"}
+    set : {[scalapb.field] { type : "scalapb.transforms.PositiveInt"} }
   } ]
 };
 

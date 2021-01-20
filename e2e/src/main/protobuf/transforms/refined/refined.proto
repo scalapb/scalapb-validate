@@ -14,18 +14,18 @@ option (scalapb.options) = {
   import : "shapeless.{Witness => W}"
 
   field_transformations : [ {
-    when : {[validate.rules] { int32 : {gt : 1}}}
-    set : {type : "Int Refined Greater[W.`$([validate.rules].int32.gt)`.T]"}
+    when : {options: {[validate.rules] { int32 : {gt : 1}}}}
+    set : {[scalapb.field] {type : "Int Refined Greater[W.`$(options.[validate.rules].int32.gt)`.T]"}}
     match_type : PRESENCE
   },
   {
-    when : {[validate.rules] { int32 : {const : 1}}}
-    set : {type : "Int Refined Equal[W.`$([validate.rules].int32.const)`.T]"}
+    when : {options: {[validate.rules] { int32 : {const : 1}}}}
+    set : {[scalapb.field] {type : "Int Refined Equal[W.`$(options.[validate.rules].int32.const)`.T]"}}
     match_type : PRESENCE
   },
   {
-    when : {[validate.rules] { double : {gt : 1, lte: 1}}}
-    set : {type : "Double Refined Interval.OpenClosed[W.`$([validate.rules].double.gt)`.T, W.`$([validate.rules].double.lte)`.T]"}
+    when : {options: {[validate.rules] { double : {gt : 1, lte: 1}}}}
+    set : {[scalapb.field] {type : "Double Refined Interval.OpenClosed[W.`$(options.[validate.rules].double.gt)`.T, W.`$(options.[validate.rules].double.lte)`.T]"}}
     match_type : PRESENCE
   } ]
 };
