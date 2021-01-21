@@ -2,10 +2,15 @@ syntax = "proto3";
 
 package examplepb;
 
+import "scalapb/scalapb.proto";
 import "scalapb/validate.proto";
 import "validate/validate.proto";
 
 message NoValidator {
-  option (scalapb.validation).insert_validator_instance = false;
+  option (scalapb.message) = {
+    [scalapb.validate.message] {
+      insert_validator_instance: false
+    }
+  };
   uint64 id    = 1 [(validate.rules).uint64.gt    = 999];
 }

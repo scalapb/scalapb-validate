@@ -1,0 +1,8 @@
+// this file without validate/validate.proto should compile
+syntax = "proto3";
+
+package e2e.cats;
+
+message Foo {
+      int32 bar = 1;
+}

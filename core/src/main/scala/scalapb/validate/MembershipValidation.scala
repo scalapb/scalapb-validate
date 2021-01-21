@@ -1,12 +1,10 @@
 package scalapb.validate
 
-import io.envoyproxy.pgv.ValidationException
-
 object MembershipValidation {
   def in[T](name: String, v: T, values: Seq[T]) =
     Result(
       values.contains(v),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"""$v must be in ${values.mkString("[", ", ", "]")}""""
@@ -16,7 +14,7 @@ object MembershipValidation {
   def notIn[T](name: String, v: T, values: Seq[T]) =
     Result(
       !values.contains(v),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"""$v must not be in ${values.mkString("[", ", ", "]")}""""

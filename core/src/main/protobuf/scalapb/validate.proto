@@ -1,13 +1,63 @@
 syntax = "proto2";
 
-package scalapb;
+package scalapb.validate;
 
-import "google/protobuf/descriptor.proto";
+import "scalapb/scalapb.proto";
 
-extend google.protobuf.MessageOptions {
-  optional MessageValidationOptions validation = 50001;
+// Field number 1089 has been assigned to ScalaPB-validate in
+// https://github.com/protocolbuffers/protobuf/pull/8111
+//
+// We extend ScalaPB's options, instead of google.protobuf so we can piggyback
+// on ScalaPB features such as package-scoped options and auxiliary options.
+extend scalapb.ScalaPbOptions {
+  optional FileValidationOptions file = 1089;
 }
 
-message MessageValidationOptions {
+extend scalapb.MessageOptions {
+  optional MessageValidationOptions message = 1089;
+}
+
+extend scalapb.FieldOptions {
+  optional FieldValidationOptions field = 1089;
+}
+
+message FileValidationOptions {
   optional bool insert_validator_instance = 1 [default=true];
+  optional bool validate_at_construction = 2  [default=false];
+
+  // The following options inject field transformations in the proto they are defined on.
+  // In order to take effect, scalapb-validate's preprocessor need to be enabled in the same
+  // file where these options are set. Example:
+  //
+  // import "scalapb/validate.proto";
+  // import "scalapb/scalapb.proto";
+  //
+  // option (scalapb.options) = {
+  //   scope : PACKAGE   // makes the FieldTransformations available for the entire package
+  //   preprocessors : [ "scalapb-validate-preprocessor" ]
+  //   [scalapb.validate.file] {
+  //     cats_transforms : true
+  //     unique_to_set : true
+  //   }
+  // }
+  optional bool unique_to_set   = 3;  // transform "repeated.unique: true" to sets.
+  optional bool cats_transforms = 4;  // transform to non-empty map, list and set.
+}
+
+// Falls back on file validation options (where default exists)
+message MessageValidationOptions {
+  optional bool insert_validator_instance = 1;
+  optional bool validate_at_construction = 2;
+}
+
+message FieldValidationOptions {
+  optional bool skip_unique_check = 1;  // not implemented yet
+}
+
+// When field transformations are enabled, ScalaPB will attempt to find validate's extension.
+// It searches in the file's imports recursively. To make sure `validate/validate.proto` is
+// found we include it here. The Dummy message below avoids an "unused import" warning.
+import "validate/validate.proto";
+message Dummy {
+  optional .validate.FieldRules dummy = 1;
 }

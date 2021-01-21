@@ -109,10 +109,10 @@ object ScalaHarness {
             ex :: _ // ignores multiple violations since pgv only supports one
           ) =>
         val allowFailure =
-          ex.getReason() == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
+          ex.reason == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
         TestResult(
           valid = false,
-          reason = ex.getMessage(),
+          reason = ex.reason,
           allowFailure = allowFailure
         )
     }

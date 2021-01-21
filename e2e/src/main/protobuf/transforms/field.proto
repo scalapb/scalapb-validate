@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package scalapb.transforms;
+
+import "validate/validate.proto";
+import "scalapb/scalapb.proto";
+
+message MyTestMessage {
+    int32 opt_pos_num = 1 [(validate.rules) = {int32: {gt: 0}}];
+    repeated int32 rep_pos_num = 2 [(validate.rules).repeated.items.int32 = {gt: 0}];
+    repeated int32 set_pos_num = 3 [
+        (validate.rules).repeated =
+            {
+                items: {int32: {gt: 0}},
+                unique: true
+            }
+    ];
+    map<int32, int32> map_pos_nums = 4 [
+      (validate.rules).map.keys.int32 = {gt: 0},
+      (validate.rules).map.values.int32 = {gt: 0}
+    ]; 
+    int32 foo = 5 [(validate.rules).int32 = {gt: -5}];
+}
+
+message MyMsg {
+    string a = 1 [(validate.rules) = {string: {const: "boo"}}];;
+}
+
+message MyTestMessageWithNonEmpty {
+    int32 opt_pos_num = 1 [(validate.rules) = {int32: {gt: 0}}];
+    repeated int32 rep_pos_num = 2 [
+        (validate.rules).repeated.items.int32 = {gt: 0},
+        (validate.rules).repeated.min_items = 1
+    ];
+    repeated int32 set_pos_num = 3 [
+        (validate.rules).repeated.items.int32 = {gt: 0},
+        (validate.rules).repeated.min_items = 1,
+        (validate.rules).repeated.unique = true
+    ];
+    map<int32, int32> map_pos_nums = 4 [
+        (validate.rules).map.keys.int32 = {gt: 0},
+        (validate.rules).map.values.int32 = {gt: 0},
+        (validate.rules).map.min_pairs = 1
+    ];
+    map<int32, MyMsg> map_msg = 5 [
+        (validate.rules).map.keys.int32 = {gt: 0},
+        (validate.rules).map.min_pairs = 1,
+        (scalapb.field).value_type = "scalapb.transforms.MyCustomType"
+    ];
+}

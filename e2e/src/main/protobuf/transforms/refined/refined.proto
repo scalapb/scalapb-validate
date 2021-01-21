@@ -1,0 +1,43 @@
+
+syntax = "proto3";
+
+package scalapb.transforms.refined;
+
+import "validate/validate.proto";
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+  preprocessors : [ "scalapb-validate-preprocessor" ]
+  import : "eu.timepit.refined.api.Refined"
+  import : "eu.timepit.refined.numeric._"
+  import : "eu.timepit.refined.generic._"
+  import : "shapeless.{Witness => W}"
+
+  field_transformations : [ {
+    when : {options: {[validate.rules] { int32 : {gt : 1}}}}
+    set : {[scalapb.field] {type : "Int Refined Greater[W.`$(options.[validate.rules].int32.gt)`.T]"}}
+    match_type : PRESENCE
+  },
+  {
+    when : {options: {[validate.rules] { int32 : {const : 1}}}}
+    set : {[scalapb.field] {type : "Int Refined Equal[W.`$(options.[validate.rules].int32.const)`.T]"}}
+    match_type : PRESENCE
+  },
+  {
+    when : {options: {[validate.rules] { double : {gt : 1, lte: 1}}}}
+    set : {[scalapb.field] {type : "Double Refined Interval.OpenClosed[W.`$(options.[validate.rules].double.gt)`.T, W.`$(options.[validate.rules].double.lte)`.T]"}}
+    match_type : PRESENCE
+  } ]
+};
+
+message RefinedTest {
+  int32 gt5 = 1 [ (.validate.rules).int32 = {gt : 5} ];
+  int32 constant = 2 [ (.validate.rules).int32 = {const : 17} ];
+  double oc = 3 [ (.validate.rules).double = {gt : 0, lte: 100} ];
+}
+
+message FreeMessage {
+  int32 gt5 = 1;
+  int32 constant = 2;
+  double oc = 3;
+}

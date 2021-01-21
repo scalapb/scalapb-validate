@@ -15,12 +15,13 @@ import scalapb.compiler.{
 import scalapb.options.Scalapb
 import scalapb.validate.compat.JavaConverters._
 import com.google.protobuf.Descriptors.OneofDescriptor
+import scalapb.compiler.EnclosingType
 
 object CodeGenerator extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
     Scalapb.registerAllExtensions(registry)
     Validate.registerAllExtensions(registry)
-    scalapb.Validate.registerAllExtensions(registry)
+    scalapb.validate.Validate.registerAllExtensions(registry)
   }
 
   override def suggestedDependencies: Seq[Artifact] =
@@ -37,7 +38,7 @@ object CodeGenerator extends CodeGenApp {
     ProtobufGenerator.parseParameters(request.parameter) match {
       case Right(params) =>
         val implicits =
-          new DescriptorImplicits(params, request.allProtos)
+          DescriptorImplicits.fromCodeGenRequest(params, request)
         CodeGenResponse.succeed(
           (for {
             file <- request.filesToGenerate
@@ -150,7 +151,7 @@ class MessagePrinter(
       rulesProto: FieldRules,
       accessor: String
   ): Seq[RenderedResult] = {
-    val itemRules = RulesGen.rulesSingle(fd, rulesProto)
+    val itemRules = RulesGen.rulesSingle(fd, rulesProto, implicits)
 
     val messageRules = Rule.ifSet(
       fd.isMessage &&
@@ -172,14 +173,39 @@ class MessagePrinter(
   }
 
   def renderedRulesForField(fd: FieldDescriptor): Seq[RenderedResult] = {
+    def toBase(e: String): String =
+      if (
+        fd.customSingleScalaTypeName.isDefined && (!fd.isMessage || !fd
+          .getMessageType()
+          .getFullName
+          .startsWith("google.protobuf."))
+      ) {
+        val tm = fd.typeMapper.fullName
+        if (fd.isRepeated() && !fd.isMapField())
+          s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
+        else if (fd.isMapField()) e
+        else if (fd.supportsPresence) s"$e.map($tm.toBase)"
+        else s"${tm}.toBase($e)"
+      } else {
+        if (fd.isRepeated && !fd.isMapField)
+          fd.collection.iterator(e, EnclosingType.None)
+        else e
+      }
+
     val rulesProto =
       FieldRules.fromJavaProto(fd.getOptions.getExtension(Validate.rules))
+
+    // Accessor that has the elements type mapped to base type.
     val accessor =
-      if (!fd.isInOneof) s"input.${fd.scalaName.asSymbol}"
+      if (!fd.isInOneof) toBase(s"input.${fd.scalaName.asSymbol}")
       else
         s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName}"
 
-    val rules = RulesGen.rulesSingle(fd, rulesProto)
+    // For repeated fields, this gives the collection itself. This is possibly
+    // a custom collection type with custom type items.
+    val collectionAccessor = s"input.${fd.scalaName.asSymbol}"
+
+    val rules = RulesGen.rulesSingle(fd, rulesProto, implicits)
 
     val maybeOpt =
       if ((fd.isInOneof || fd.supportsPresence) && rules.nonEmpty)
@@ -192,21 +218,35 @@ class MessagePrinter(
         )
       else Seq.empty
 
-    val maybeRepeated =
+    val maybeRepeated: Seq[RenderedResult] =
       if (fd.isRepeated() && !fd.isMapField())
-        repeatedRules(fd, rulesProto.getRepeated.getItems, accessor)
-      else if (fd.isRepeated() && fd.isMapField())
+        repeatedRules(
+          fd,
+          rulesProto.getRepeated.getItems,
+          accessor
+        )
+      else if (fd.isRepeated() && fd.isMapField()) {
+        def accessKeyOrValue(index: Int) = {
+          val kvDesc = fd.getMessageType().findFieldByNumber(index)
+          if (kvDesc.customSingleScalaTypeName.isEmpty) s".map(_._$index)"
+          else {
+            val tm = kvDesc.typeMapper.fullName
+            s".map(__e => $tm.toBase(__e._$index))"
+          }
+        }
         repeatedRules(
           fd.getMessageType().findFieldByNumber(1),
           rulesProto.getMap.getKeys,
-          accessor + ".keys"
+          fd.collection
+            .iterator(accessor, EnclosingType.None) + accessKeyOrValue(1)
         ) ++
           repeatedRules(
             fd.getMessageType().findFieldByNumber(2),
             rulesProto.getMap.getValues,
-            accessor + ".values"
+            fd.collection
+              .iterator(accessor, EnclosingType.None) + accessKeyOrValue(2)
           )
-      else Seq.empty
+      } else Seq.empty
 
     val messageRules = if (fd.isMessage) {
       val maybeRequired: Option[SingularResult] = Rule.ifSet(
@@ -234,13 +274,20 @@ class MessagePrinter(
       maybeRequired ++ maybeNested
     } else Seq.empty
 
-    val maybeRequired = Rule.ifSet(RulesGen.isRequired(rulesProto))(
-      SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
-    )
+    val maybeRequired =
+      Rule.ifSet(RulesGen.isRequired(rulesProto) && !fd.noBoxRequired)(
+        SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
+      )
 
     val maybeSingular =
       if (!fd.supportsPresence && !fd.isInOneof && rules.nonEmpty)
-        rules.map(r => SingularResult(fd, accessor, r))
+        rules.map(r =>
+          SingularResult(
+            fd,
+            if (fd.isRepeated) collectionAccessor else accessor,
+            r
+          )
+        )
       else Seq.empty
 
     maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules ++ maybeRequired
@@ -281,10 +328,31 @@ class MessagePrinter(
     val companionInsertion = message.messageCompanionInsertionPoint.withContent(
       s"implicit val validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
     )
-    val insertValidation = message.getOptions
-      .getExtension(scalapb.Validate.validation)
-      .getInsertValidatorInstance
+
+    val constructorInsertion = message.messageClassInsertionPoint.withContent(
+      s"_root_.scalapb.validate.Validator.assertValid(this)(${validatorName(message).fullName})"
+    )
+    val msgOpts = message.messageOptions
+      .getExtension(scalapb.validate.Validate.message)
+    val fileOpts = message
+      .getFile()
+      .scalaOptions
+      .getExtension(scalapb.validate.Validate.file)
+
+    val insertValidation =
+      if (msgOpts.hasInsertValidatorInstance())
+        msgOpts.getInsertValidatorInstance()
+      else fileOpts.getInsertValidatorInstance()
+
+    val insertToConstructor =
+      if (msgOpts.hasValidateAtConstruction())
+        msgOpts.getValidateAtConstruction()
+      else fileOpts.getValidateAtConstruction()
+
     Seq(validationFile) ++ (if (insertValidation) Seq(companionInsertion)
-                            else Nil)
+                            else Nil) ++ (if (insertToConstructor)
+                                            Seq(constructorInsertion)
+                                          else Nil)
+
   }
 }

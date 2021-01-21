@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package scalapb.transforms;
+
+import "validate/validate.proto";
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {preprocessors: ["scalapb-validate-preprocessor"]};
+
+message RequiredMsg {}
+
+message Container {
+    RequiredMsg required_msg = 1 [(validate.rules).message.required = true];
+}

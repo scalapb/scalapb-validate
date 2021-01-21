@@ -1,6 +1,5 @@
 package scalapb.validate
 
-import io.envoyproxy.pgv.ValidationException
 import math.Ordering.Implicits._
 import com.google.protobuf.timestamp.Timestamp
 import com.google.protobuf.duration.Duration
@@ -25,19 +24,19 @@ object ComparativeValidation {
   def greaterThan[T: Ordering](name: String, v: T, limit: T) =
     Result(
       v > limit,
-      new ValidationException(name, v, s"$v must be greater than $limit")
+      ValidationFailure(name, v, s"$v must be greater than $limit")
     )
 
   def lessThan[T](name: String, v: T, limit: T)(implicit order: Ordering[T]) =
     Result(
       v < limit,
-      new ValidationException(name, v, s"$v must be less than $limit")
+      ValidationFailure(name, v, s"$v must be less than $limit")
     )
 
   def greaterThanOrEqual[T: Ordering](name: String, v: T, limit: T) =
     Result(
       v >= limit,
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be greater than or equal to $limit"
@@ -47,7 +46,7 @@ object ComparativeValidation {
   def lessThanOrEqual[T: Ordering](name: String, v: T, limit: T) =
     Result(
       v <= limit,
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be less than or equal to $limit"
@@ -57,7 +56,7 @@ object ComparativeValidation {
   def rangeGteLte[T: Ordering](name: String, v: T, left: T, right: T) =
     Result(
       (v >= left) && (v <= right),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be in the range [$left, $right]"
@@ -67,7 +66,7 @@ object ComparativeValidation {
   def rangeGteLt[T: Ordering](name: String, v: T, left: T, right: T) =
     Result(
       (v >= left) && (v < right),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be in the range [$left, $right)"
@@ -77,7 +76,7 @@ object ComparativeValidation {
   def rangeGtLte[T: Ordering](name: String, v: T, left: T, right: T) =
     Result(
       (v > left) && (v <= right),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be in the range ($left, $right]"
@@ -87,7 +86,7 @@ object ComparativeValidation {
   def rangeGtLt[T: Ordering](name: String, v: T, left: T, right: T) =
     Result(
       (v > left) && (v < right),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be in the range ($left, $right)"
@@ -97,7 +96,7 @@ object ComparativeValidation {
   def rangeGteLteEx[T: Ordering](name: String, v: T, right: T, left: T) =
     Result(
       (v >= right) || (v <= left),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be outside the range ($left, $right)"
@@ -107,7 +106,7 @@ object ComparativeValidation {
   def rangeGteLtEx[T: Ordering](name: String, v: T, right: T, left: T) =
     Result(
       (v >= right) || (v < left),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be outside the range [$left, $right)"
@@ -117,7 +116,7 @@ object ComparativeValidation {
   def rangeGtLteEx[T: Ordering](name: String, v: T, right: T, left: T) =
     Result(
       (v > right) || (v <= left),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be outside the range ($left, $right]"
@@ -127,7 +126,7 @@ object ComparativeValidation {
   def rangeGtLtEx[T: Ordering](name: String, v: T, right: T, left: T) =
     Result(
       (v > right) || (v < left),
-      new ValidationException(
+      ValidationFailure(
         name,
         v,
         s"$v must be outside the range [$left, $right]"
@@ -137,6 +136,6 @@ object ComparativeValidation {
   def constant[T](name: String, v: T, limit: T)(implicit order: Ordering[T]) =
     Result(
       v equiv limit,
-      new ValidationException(name, v, s"$v must be equal to $limit")
+      ValidationFailure(name, v, s"$v must be equal to $limit")
     )
 }

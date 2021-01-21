@@ -1,0 +1,42 @@
+syntax = "proto2";
+
+package scalapb.transforms.order;
+
+import "scalapb/scalapb.proto";
+import "validate/validate.proto";
+
+option (scalapb.options) = {
+  preprocessors : [ "scalapb-validate-preprocessor" ],
+  scope : PACKAGE
+
+  // This test verifies that the last transformation that matches overrides the
+  // previous ones
+  field_transformations : [ {
+    when : {
+      options {
+          [validate.rules]{int32 : {gt : 0}}
+      }
+    }
+    set : {[scalapb.field] {type : "UndefinedTypeShouldNotCompile"}}
+  } ]
+  field_transformations : [ {
+    when : {
+      options {
+          [validate.rules]{int32 : {gt : 0}}
+      }
+    }
+    set : {[scalapb.field] { type : "UndefinedTypeShouldAlsoNotCompile"}}
+  } ]
+  field_transformations : [ {
+    when : {
+      options {
+        [validate.rules]{int32 : {gt : 0}}
+      }
+    }
+    set : {[scalapb.field] { type : "scalapb.transforms.PositiveInt"} }
+  } ]
+};
+
+message TestMessage {
+  optional int32 a = 1 [ (.validate.rules).int32 = {gt : 0} ];
+}
