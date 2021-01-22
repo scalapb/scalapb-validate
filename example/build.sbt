@@ -4,11 +4,11 @@ scalaVersion := "2.13.2"
 
 ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
 
-scalacOptions in ThisBuild ++= Seq("-Xfatal-warnings", "-Xlint")
+ThisBuild / scalacOptions ++= Seq("-Xfatal-warnings", "-Xlint")
 
-PB.targets in Compile := Seq(
-  scalapb.gen() -> (sourceManaged in Compile).value / "scalapb",
-  scalapb.validate.gen() -> (sourceManaged in Compile).value / "scalapb"
+Compile / PB.targets := Seq(
+  scalapb.gen() -> (Compile / sourceManaged).value / "scalapb",
+  scalapb.validate.gen() -> (Compile / sourceManaged).value / "scalapb"
 )
 
 libraryDependencies ++= Seq(

@@ -35,9 +35,9 @@ To run this test suite against scalapb-validate:
    ```
    ThisBuild / resolvers += Resolver.sonatypeRepo("snapshots")
 
-   PB.targets in Compile := Seq(
-     scalapb.gen() -> (sourceManaged in Compile).value / "scalapb",
-     scalapb.validate.gen() -> (sourceManaged in Compile).value / "scalapb"
+   Compile / PB.targets := Seq(
+     scalapb.gen() -> (Compile / sourceManaged).value / "scalapb",
+     scalapb.validate.gen() -> (Compile / sourceManaged).value / "scalapb"
    )
    
    libraryDependencies ++= Seq(	
