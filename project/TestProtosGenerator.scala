@@ -73,13 +73,13 @@ object TestProtosGenerator {
     generateAllTypesProto := {
       val protoContent = protoBase + types.map(template).mkString("\n")
       val protoFile =
-        (sourceManaged in Compile).value / "protobuf" / "alltypes.proto"
+        (Compile / sourceManaged).value / "protobuf" / "alltypes.proto"
       IO.write(protoFile, protoContent)
       Seq(protoFile)
     },
-    (sourceGenerators in Compile) += Def.task {
+    (Compile / sourceGenerators) += Def.task {
       val scalaFile =
-        (sourceManaged in Compile).value / "alltypes" / "instances.scala"
+        (Compile / sourceManaged).value / "alltypes" / "instances.scala"
       IO.write(scalaFile, instances)
       Seq(scalaFile)
     },

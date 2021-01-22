@@ -5,7 +5,7 @@ val Scala213 = "2.13.3"
 
 val Scala212 = "2.12.10"
 
-skip in publish := true
+publish / skip := true
 
 sonatypeProfileName := "com.thesamet"
 
@@ -45,9 +45,9 @@ lazy val core = projectMatrix
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
-    PB.targets in Compile := Seq(
-      PB.gens.java -> (sourceManaged in Compile).value / "scalapb",
-      scalapb.gen() -> (sourceManaged in Compile).value / "scalapb"
+    Compile / PB.targets := Seq(
+      PB.gens.java -> (Compile / sourceManaged).value / "scalapb",
+      scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
@@ -84,9 +84,9 @@ lazy val codeGen = projectMatrix
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf",
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0")
     ),
-    PB.protoSources in Compile += core.base / "src" / "main" / "protobuf",
-    PB.targets in Compile := Seq(
-      PB.gens.java -> (sourceManaged in Compile).value / "scalapb"
+    Compile / PB.protoSources += core.base / "src" / "main" / "protobuf",
+    Compile / PB.targets := Seq(
+      PB.gens.java -> (Compile / sourceManaged).value / "scalapb"
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
@@ -107,7 +107,7 @@ lazy val e2e = projectMatrix
   .settings(stdSettings)
   .settings(munitSettings)
   .settings(
-    skip in publish := true,
+    publish / skip := true,
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
@@ -118,13 +118,13 @@ lazy val e2e = projectMatrix
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     TestProtosGenerator.generateAllTypesProtoSettings,
-    (Compile / PB.protoSources) += (sourceManaged in Compile).value / "protobuf",
-    PB.targets in Compile := Seq(
+    Compile / PB.protoSources += (Compile / sourceManaged).value / "protobuf",
+    Compile / PB.targets := Seq(
       genModule("scalapb.validate.compiler.ValidatePreprocessor$") ->
-        (sourceManaged in Compile).value / "scalapb",
-      scalapb.gen(grpc = true) -> (sourceManaged in Compile).value / "scalapb",
+        (Compile / sourceManaged).value / "scalapb",
+      scalapb.gen(grpc = true) -> (Compile / sourceManaged).value / "scalapb",
       genModule("scalapb.validate.compiler.CodeGenerator$") ->
-        (sourceManaged in Compile).value / "scalapb"
+        (Compile / sourceManaged).value / "scalapb"
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
