@@ -41,8 +41,8 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0"),
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-1"),
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-1") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
     Compile / PB.targets := Seq(
