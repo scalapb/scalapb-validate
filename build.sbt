@@ -48,7 +48,11 @@ lazy val core = projectMatrix
     Compile / PB.targets := Seq(
       PB.gens.java -> (Compile / sourceManaged).value / "scalapb",
       scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-    )
+    ),
+    Compile / packageBin / packageOptions += {
+        Package.ManifestAttributes("ScalaPB-Options-Proto" ->
+        "scalapb/validate-options.proto")
+    }
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
 

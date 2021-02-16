@@ -1,0 +1,11 @@
+syntax = "proto3";
+package scalapb.validate;
+
+import "scalapb/scalapb.proto";
+option (scalapb.options) = {
+  scope: PACKAGE
+  flat_package: false
+  lenses: true
+  java_conversions: true
+  preserve_unknown_fields: true
+};
