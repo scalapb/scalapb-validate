@@ -119,7 +119,7 @@ lazy val e2e = projectMatrix
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.10.3",
       "org.typelevel" %% "cats-core" % "2.4.2",
       "io.undertow" % "undertow-core" % "2.2.4.Final",
-      "eu.timepit" %% "refined" % "0.9.20",
+      "eu.timepit" %% "refined" % "0.9.21",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     TestProtosGenerator.generateAllTypesProtoSettings,
