@@ -118,7 +118,7 @@ lazy val e2e = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.10.3",
       "org.typelevel" %% "cats-core" % "2.4.2",
-      "io.undertow" % "undertow-core" % "2.2.4.Final",
+      "io.undertow" % "undertow-core" % "2.2.5.Final",
       "eu.timepit" %% "refined" % "0.9.21",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
