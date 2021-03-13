@@ -5,13 +5,14 @@ import com.google.protobuf.timestamp.Timestamp
 import com.google.protobuf.duration.Duration
 
 object ComparativeValidation {
-  implicit val timestampOrdering: Ordering[Timestamp] = new Ordering[Timestamp] {
-    def compare(x: Timestamp, y: Timestamp): Int = {
-      val o1 = java.lang.Long.compare(x.seconds, y.seconds)
-      if (o1 != 0) o1
-      else java.lang.Integer.compare(x.nanos, y.nanos)
+  implicit val timestampOrdering: Ordering[Timestamp] =
+    new Ordering[Timestamp] {
+      def compare(x: Timestamp, y: Timestamp): Int = {
+        val o1 = java.lang.Long.compare(x.seconds, y.seconds)
+        if (o1 != 0) o1
+        else java.lang.Integer.compare(x.nanos, y.nanos)
+      }
     }
-  }
 
   implicit val durationOrdering: Ordering[Duration] = new Ordering[Duration] {
     def compare(x: Duration, y: Duration): Int = {
