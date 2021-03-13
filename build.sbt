@@ -5,6 +5,8 @@ val Scala213 = "2.13.3"
 
 val Scala212 = "2.12.10"
 
+val Scala3 = "3.0.0-RC1"
+
 publish / skip := true
 
 sonatypeProfileName := "com.thesamet"
@@ -23,7 +25,8 @@ inThisBuild(
         "thesamet@gmail.com",
         url("https://www.thesamet.com")
       )
-    )
+    ),
+    PB.protocVersion := "3.15.6"
   )
 )
 
@@ -41,8 +44,8 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-1"),
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-1") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3"),
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
     Compile / PB.targets := Seq(
@@ -54,7 +57,8 @@ lazy val core = projectMatrix
         "ScalaPB-Options-Proto" ->
           "scalapb/validate-options.proto"
       )
-    }
+    },
+    compileOrder := CompileOrder.JavaThenScala
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
 
@@ -86,8 +90,8 @@ lazy val codeGen = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0") % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.10" % (pgvVersion + "-0")
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0")
     ),
     Compile / PB.protoSources += core.base / "src" / "main" / "protobuf",
     Compile / PB.targets := Seq(
@@ -116,7 +120,7 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.10.3",
+      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.0-M1",
       "org.typelevel" %% "cats-core" % "2.4.2",
       "io.undertow" % "undertow-core" % "2.2.5.Final",
       "eu.timepit" %% "refined" % "0.9.21",

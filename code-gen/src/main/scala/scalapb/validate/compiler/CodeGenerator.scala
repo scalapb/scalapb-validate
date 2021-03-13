@@ -56,7 +56,7 @@ class MessagePrinter(
     implicits: DescriptorImplicits,
     message: Descriptor
 ) {
-  import DescriptorImplicits.AsSymbolPimp
+  import DescriptorImplicits.AsSymbolExtension
   import implicits._
 
   private def validatorName(fd: Descriptor): ScalaName =
