@@ -6,22 +6,17 @@ jobs:
   build:
     strategy:
       matrix:
-        os: ["macos-latest", "ubuntu-latest"]
+        os: ["ubuntu-latest"]
         scala: [JVM2_12, JVM2_13]
     runs-on: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v1
 
-    - name: Mount bazel cache
-      uses: actions/cache@v1
-      with:
-        path: "/home/runner/.cache/bazel"
-        key: bazel
-
-    - name: Build test executor
+    - name: Download test executor
       run: |
         ./make_harness.sh
+
     - uses: olafurpg/setup-scala@v10
       with:
         java-version: adopt@1.8

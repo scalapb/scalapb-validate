@@ -1,12 +1,12 @@
 [![Snapshot Artifacts][Badge-SonatypeSnapshots]][Link-SonatypeSnapshots]
 
-## Running the test harness
+## Running the test harness (Linux only)
 
 PGV repo includes a comprehensive [test suite](https://github.com/envoyproxy/protoc-gen-validate/blob/master/tests/harness/executor/cases.go) defined over these [proto files](https://github.com/envoyproxy/protoc-gen-validate/tree/master/tests/harness/cases).
 
 To run this test suite against scalapb-validate:
 
-1. Run `./make_harness.sh`. This will download [bazelisk](https://github.com/bazelbuild/bazelisk), clone PGV, and compile its test executor. It is only needed to be done once, and can take a few minutes to compile.
+1. Run `./make_harness.sh`. This will download a prebuilt statically-compiled executor built from protoc-gen-validate that runs the test harness.
 
 2. In SBT, run `e2eJVM2_13/test:runMain scalapb.validate.ScalaHarness`.
 

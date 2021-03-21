@@ -90,7 +90,10 @@ object ScalaHarness {
   def processRequest(exchange: HttpServerExchange): Unit = {
     val testCase = TestCase.parseFrom(exchange.getInputStream())
     val message = testCase.getMessage.typeUrl.substring(20)
-    val cmp = typeMap.find(_._1 == message).get._2
+    val cmp = typeMap
+      .find(_._1 == message)
+      .getOrElse(throw new RuntimeException(s"Could not find message $message"))
+      ._2
     val klass = Class.forName(
       cmp.defaultInstance.getClass().getCanonicalName() + "Validator$"
     )
@@ -170,7 +173,7 @@ object ScalaHarness {
     waitForServer(port, 10000)
     val status =
       try Process(
-        ".pgv/executor.exe",
+        "./executor.exe",
         Seq(
           "-external_harness",
           script.toString()

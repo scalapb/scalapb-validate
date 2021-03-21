@@ -65,11 +65,16 @@ object StringRulesGen {
       ifSet(rules.getUri)(Rule.java(s"$SV.uri")),
       ifSet(rules.getUriRef)(Rule.java(s"$SV.uriRef")),
       ifSet(rules.getUuid)(Rule.java(s"$SV.uuid")),
-      ifSet(rules.getWellKnownRegex.isHttpHeaderName)(
+      ifSet(rules.getWellKnownRegex.isHttpHeaderName && rules.getStrict)(
         Rule.java(s"$SV.pattern", s"$WRX.HTTP_HEADER_NAME")
       ),
-      ifSet(rules.getWellKnownRegex.isHttpHeaderValue)(
+      ifSet(rules.getWellKnownRegex.isHttpHeaderValue && rules.getStrict)(
         Rule.java(s"$SV.pattern", s"$WRX.HTTP_HEADER_VALUE")
+      ),
+      ifSet(
+        (rules.getWellKnownRegex.isHttpHeaderValue || rules.getWellKnownRegex.isHttpHeaderName) && !rules.getStrict
+      )(
+        Rule.java(s"$SV.pattern", s"$WRX.HEADER_STRING")
       )
     ).flatten ++ MembershipRulesGen.membershipRules(rules)
 }

@@ -60,7 +60,7 @@ lazy val core = projectMatrix
     },
     compileOrder := CompileOrder.JavaThenScala
   )
-  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
 
 lazy val cats = projectMatrix
   .in(file("cats"))
@@ -75,7 +75,7 @@ lazy val cats = projectMatrix
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "provided"
     )
   )
-  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
 
 lazy val codeGen = projectMatrix
   .in(file("code-gen"))
@@ -120,7 +120,7 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.0-M1",
+      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.0",
       "org.typelevel" %% "cats-core" % "2.4.2",
       "io.undertow" % "undertow-core" % "2.2.5.Final",
       "eu.timepit" %% "refined" % "0.9.21",

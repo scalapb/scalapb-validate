@@ -10,3 +10,4 @@ examples/project/metals.sbt
 .pgv
 bazelisk
 .bsp
+executor.exe

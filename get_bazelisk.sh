@@ -9,6 +9,7 @@ else
         export URL=https://github.com/bazelbuild/bazelisk/releases/download/v1.7.5/bazelisk-linux-amd64
     fi
 
-    curl -L $URL -o bazelisk
-    chmod +x ./bazelisk
+    curl -L $URL -o bazel
+    chmod +x ./bazel
+    export PATH=$PATH:$PWD
 fi
