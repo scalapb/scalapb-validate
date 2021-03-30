@@ -18,4 +18,4 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.20.0")
 
 addSbtPlugin("com.thesamet" % "sbt-protoc-gen-project" % "0.1.6")
 
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.3")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.5.4")
