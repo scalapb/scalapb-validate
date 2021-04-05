@@ -44,8 +44,8 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3"),
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4"),
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
     Compile / PB.targets := Seq(
@@ -90,8 +90,8 @@ lazy val codeGen = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3") % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-3")
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4")
     ),
     Compile / PB.protoSources += core.base / "src" / "main" / "protobuf",
     Compile / PB.targets := Seq(
