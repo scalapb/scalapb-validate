@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package third_party;
+
+import "scalapb/scalapb.proto";
+import "scalapb/validate.proto";
+
+option (scalapb.options) = {
+  scope : PACKAGE
+  [scalapb.validate.file]{
+    skip: true
+  }
+};

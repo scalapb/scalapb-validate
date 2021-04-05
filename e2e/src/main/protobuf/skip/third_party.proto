@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package third_party;
+
+message CantChangeThisMessage {
+  int32 a = 1;
+}
+
+enum CantChangeThisEnum {
+  DEFAULT = 0;
+  VALUE_A = 1;
+}

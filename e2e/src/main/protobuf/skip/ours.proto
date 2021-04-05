@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package ours;
+
+import "scalapb/validate.proto";
+import "skip/third_party.proto";
+
+message OurMessage {
+    third_party.CantChangeThisMessage msg_ref = 1;
+    third_party.CantChangeThisEnum enum_ref = 2;
+};
