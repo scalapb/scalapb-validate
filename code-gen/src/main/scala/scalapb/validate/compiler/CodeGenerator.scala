@@ -251,7 +251,10 @@ class MessagePrinter(
     val messageRules = if (fd.isMessage) {
       val maybeRequired: Option[SingularResult] = Rule.ifSet(
         !fd.supportsPresence && !fd.isRepeated && !fd.isInOneof && !rulesProto.getMessage.getSkip &&
-          !fd.getMessageType.getFullName.startsWith("google.protobuf")
+          !fd.getMessageType.getFullName.startsWith("google.protobuf") &&
+          !fd.getMessageType.getFile.scalaOptions
+            .getExtension(scalapb.validate.Validate.file)
+            .getSkip
       )(
         SingularResult(
           fd,
@@ -262,7 +265,10 @@ class MessagePrinter(
 
       val maybeNested = Rule.ifSet(
         (fd.supportsPresence || fd.isInOneof) && !rulesProto.getMessage.getSkip &&
-          !fd.getMessageType.getFullName.startsWith("google.protobuf")
+          !fd.getMessageType.getFullName.startsWith("google.protobuf") &&
+          !fd.getMessageType.getFile.scalaOptions
+            .getExtension(scalapb.validate.Validate.file)
+            .getSkip
       )(
         OptionalResult(
           fd,
@@ -334,6 +340,7 @@ class MessagePrinter(
     )
     val msgOpts = message.messageOptions
       .getExtension(scalapb.validate.Validate.message)
+
     val fileOpts = message
       .getFile()
       .scalaOptions
@@ -349,10 +356,11 @@ class MessagePrinter(
         msgOpts.getValidateAtConstruction()
       else fileOpts.getValidateAtConstruction()
 
-    Seq(validationFile) ++ (if (insertValidation) Seq(companionInsertion)
-                            else Nil) ++ (if (insertToConstructor)
-                                            Seq(constructorInsertion)
-                                          else Nil)
-
+    if (!fileOpts.getSkip)
+      (Seq(validationFile) ++ (if (insertValidation) Seq(companionInsertion)
+                               else Nil) ++ (if (insertToConstructor)
+                                               Seq(constructorInsertion)
+                                             else Nil))
+    else Seq.empty
   }
 }

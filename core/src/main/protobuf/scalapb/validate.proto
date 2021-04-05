@@ -42,6 +42,12 @@ message FileValidationOptions {
   // }
   optional bool unique_to_set   = 3;  // transform "repeated.unique: true" to sets.
   optional bool cats_transforms = 4;  // transform to non-empty map, list and set.
+
+  // Set `skip` to true to avoid generating validators for this file. This
+  // option is also useful to be set a package-scoped option for third-party
+  // protos that do not come with validator classes and your messages
+  // reference them.
+  optional bool skip = 5;
 }
 
 // Falls back on file validation options (where default exists)
