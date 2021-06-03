@@ -5,7 +5,7 @@ val Scala213 = "2.13.6"
 
 val Scala212 = "2.12.14"
 
-val Scala3 = "3.0.0-RC2"
+val Scala3 = "3.0.0"
 
 publish / skip := true
 
@@ -44,8 +44,8 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4"),
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-6"),
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-6") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
     ),
     Compile / PB.targets := Seq(
@@ -71,7 +71,7 @@ lazy val cats = projectMatrix
   .settings(
     name := "scalapb-validate-cats",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.6.0" % "provided",
+      "org.typelevel" %% "cats-core" % "2.6.1" % "provided",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "provided"
     )
   )
@@ -117,16 +117,18 @@ lazy val e2e = projectMatrix
   .settings(munitSettings)
   .settings(
     publish / skip := true,
-    crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.1",
-      "org.typelevel" %% "cats-core" % "2.6.0",
+      ("com.thesamet.scalapb" %% "scalapb-json4s" % "0.11.1")
+        .cross(CrossVersion.for3Use2_13),
+      "org.typelevel" %% "cats-core" % "2.6.1",
       "io.undertow" % "undertow-core" % "2.2.8.Final",
       "eu.timepit" %% "refined" % "0.9.26",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
     TestProtosGenerator.generateAllTypesProtoSettings,
+    Compile / PB.protoSources +=
+      (Compile / sourceDirectory).value / s"protobuf-scala-${scalaVersion.value.take(1)}",
     Compile / PB.protoSources += (Compile / sourceManaged).value / "protobuf",
     Compile / PB.targets := Seq(
       genModule("scalapb.validate.compiler.ValidatePreprocessor$") ->
@@ -136,4 +138,4 @@ lazy val e2e = projectMatrix
         (Compile / sourceManaged).value / "scalapb"
     )
   )
-  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
