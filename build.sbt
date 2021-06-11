@@ -90,15 +90,17 @@ lazy val codeGen = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4") % "protobuf",
-      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-4")
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-6") % "protobuf",
+      "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-6")
     ),
     Compile / PB.protoSources += core.base / "src" / "main" / "protobuf",
     Compile / PB.targets := Seq(
       PB.gens.java -> (Compile / sourceManaged).value / "scalapb"
-    )
+    ),
+    // avoids "Not found: type UnusedPrivateParameter" in scalapb/scalapb/validate/Validate.java with Scala 3
+    Compile / compileOrder := CompileOrder.JavaThenScala
   )
-  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
 
 lazy val codeGenJVM212 = codeGen.jvm(Scala212)
 
