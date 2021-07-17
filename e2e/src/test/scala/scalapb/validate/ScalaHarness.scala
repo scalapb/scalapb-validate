@@ -115,7 +115,7 @@ object ScalaHarness {
           ex.reason == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
         TestResult(
           valid = false,
-          reason = ex.reason,
+          reasons = Seq(ex.reason),
           allowFailure = allowFailure
         )
     }

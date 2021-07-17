@@ -199,7 +199,7 @@ class MessagePrinter(
     val accessor =
       if (!fd.isInOneof) toBase(s"input.${fd.scalaName.asSymbol}")
       else
-        s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName}"
+        s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName.asSymbol}"
 
     // For repeated fields, this gives the collection itself. This is possibly
     // a custom collection type with custom type items.
