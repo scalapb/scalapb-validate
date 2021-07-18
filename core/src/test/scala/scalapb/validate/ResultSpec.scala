@@ -31,6 +31,18 @@ class ResultSpec extends munit.FunSuite {
     )
   }
 
+  test("Result || Result") {
+    val failure = Failure(ValidationFailure("field", 42, "reason"))
+    val otherFailure = Failure(ValidationFailure("field2", 24, "reason"))
+    assertEquals(Success || Success, Success)
+    assertEquals(Success || failure, Success)
+    assertEquals(failure || Success, Success)
+    assertEquals(
+      failure || otherFailure,
+      otherFailure
+    )
+  }
+
   test("Result.apply") {
     val exception = ValidationFailure("field", 42, "reason")
     assertEquals(

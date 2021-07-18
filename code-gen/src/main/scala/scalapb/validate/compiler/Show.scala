@@ -10,7 +10,7 @@ trait Show[T] {
 
 object Show {
   implicit val showFloat: Show[Float] = (v: Float) => s"${v}f"
-  implicit val showDouble: Show[Double] = (v: Double) => s"${v}"
+  implicit val showDouble: Show[Double] = (v: Double) => s"$v"
   implicit val showInt: Show[Int] = (v: Int) => v.toString()
   implicit val showLong: Show[Long] = (v: Long) => s"${v}L"
   implicit val showString: Show[String] = (v: String) =>

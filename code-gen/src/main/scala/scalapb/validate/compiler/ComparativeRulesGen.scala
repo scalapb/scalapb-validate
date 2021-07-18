@@ -47,7 +47,7 @@ object ComparativeRulesGen {
 
   def comparativeRules[T: Ordering: ClassTag](
       rules: ComparativeRules[T]
-  )(implicit show: Show[T]): Seq[Rule] = {
+  )(implicit show: Show[T]): Seq[FunctionCall] = {
     if (rules.gt.isDefined && rules.gte.isDefined)
       new RuntimeException("Error: both gt and gte were specified.")
     if (rules.lt.isDefined && rules.lte.isDefined)
@@ -91,7 +91,7 @@ object ComparativeRulesGen {
 
     val imports = additionalImports(classTag[T].runtimeClass.getName)
     (rangeRules ++ constRules).map(rule =>
-      imports.foldLeft[Rule](rule)(_.withImport(_))
+      imports.foldLeft[FunctionCall](rule)(_.withImport(_))
     )
   }
 

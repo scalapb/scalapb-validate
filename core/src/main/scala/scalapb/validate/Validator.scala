@@ -16,6 +16,12 @@ sealed trait Result {
       case (f: Failure, Success)           => f
       case (Failure(left), Failure(right)) => Failure(left ::: right)
     }
+
+  def ||(other: => Result): Result =
+    (this, other) match {
+      case (Success, _)        => Success
+      case (Failure(_), right) => right
+    }
 }
 
 /** Represents a failure to validate a single field */

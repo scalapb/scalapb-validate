@@ -43,6 +43,7 @@ object CodeGenerator extends CodeGenApp {
           (for {
             file <- request.filesToGenerate
             message <- file.getMessageTypes().asScala
+            if (!message.getOptions.getExtension(Validate.ignored))
           } yield new MessagePrinter(implicits, message).result()).flatten
         )
       case Left(error) =>
@@ -73,16 +74,56 @@ class MessagePrinter(
   private val Validator = "scalapb.validate.Validator"
   private val Result = "scalapb.validate.Result"
 
-  val fieldRules: Seq[RenderedResult] =
-    message.getFields().asScala.toSeq.flatMap(renderedRulesForField(_))
+  val fieldRules: Seq[(FieldDescriptor, Rule)] =
+    message
+      .getFields()
+      .asScala
+      .toSeq
+      .flatMap { fd =>
+        ruleForField(fd) match {
+          case Some(rule) => Seq((fd, rule))
+          case None       => Seq.empty
+        }
+      }
+
+  def toBase(fd: FieldDescriptor, e: String): String =
+    if (
+      fd.customSingleScalaTypeName.isDefined && (!fd.isMessage || !fd
+        .getMessageType()
+        .getFullName
+        .startsWith("google.protobuf."))
+    ) {
+      val tm = fd.typeMapper.fullName
+      if (fd.isRepeated() && !fd.isMapField())
+        s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
+      else if (fd.isMapField()) e
+      else if (fd.supportsPresence) s"$e.map($tm.toBase)"
+      else s"$tm.toBase($e)"
+    } else {
+      if (fd.isRepeated && !fd.isMapField)
+        fd.collection.iterator(e, EnclosingType.None)
+      else e
+    }
 
   def printValidate(fp: FunctionalPrinter): FunctionalPrinter = {
-    val fieldRulesGroup = fieldRules.map(formatRenderedResult(_))
+    val fieldRulesGroup = fieldRules.map { case (fd, rule) =>
+      // Accessor that has the elements type mapped to base type.
+      val accessor =
+        if (fd.isRepeated())
+          s"input.${fd.scalaName.asSymbol}"
+        else if (!fd.isInOneof) toBase(fd, s"input.${fd.scalaName.asSymbol}")
+        else
+          s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName.asSymbol}"
+
+      rule.render(fd, accessor)(FunctionalPrinter()).content
+    }
 
     val ruleGroups =
       fieldRulesGroup ++
         message.getOneofs.asScala.toSeq.flatMap(formattedRulesForOneofs)
+
     val isDisabled = message.getOptions().getExtension(Validate.disabled)
+
     fp.add(
       s"def validate(input: ${message.scalaType.fullName}): $Result ="
     ).when(!isDisabled)(
@@ -92,22 +133,22 @@ class MessagePrinter(
     ).when(ruleGroups.isEmpty || isDisabled)(
       _.add("  scalapb.validate.Success")
     ).add("")
-      .print(message.getNestedTypes.asScala)((fp, fd) =>
-        new MessagePrinter(implicits, fd).printObject(fp)
-      )
   }
 
   def printObject(fp: FunctionalPrinter): FunctionalPrinter =
     fp.add(
       s"object ${objectName.name} extends $Validator[${message.scalaType.fullName}] {"
-    ).indented(
-      _.seq(fieldRules.flatMap(_.preambles))
-        .call(printValidate)
-    ).add("}")
+    ).indented(_.seq(fieldRules.flatMap(_._2.preamble)))
+      .call(printValidate)
+      .print(
+        message.getNestedTypes.asScala
+          .filterNot(_.getOptions().getExtension(Validate.ignored))
+      )((fp, fd) => new MessagePrinter(implicits, fd).printObject(fp))
+      .add("}")
 
   def content: String = {
     val fp = new FunctionalPrinter()
-    val imports = fieldRules.flatMap(_.imports).distinct
+    val imports = fieldRules.flatMap(_._2.imports).distinct
     fp.add(s"package ${message.getFile.scalaPackage.fullName}", "")
       .add()
       .seq(imports.map(i => s"import $i"))
@@ -115,42 +156,11 @@ class MessagePrinter(
       .result()
   }
 
-  sealed trait RenderedResult {
-    def imports: Seq[String]
-
-    def preambles: Seq[String]
-  }
-
-  case class SingularResult(fd: FieldDescriptor, accessor: String, line: Rule)
-      extends RenderedResult {
-    def imports = line.imports
-
-    def preambles = line.preamble
-  }
-
-  case class OptionalResult(
-      fd: FieldDescriptor,
-      accessor: String,
-      lines: Seq[Rule]
-  ) extends RenderedResult {
-    def imports = lines.flatMap(_.imports)
-    def preambles = lines.flatMap(_.preamble)
-  }
-
-  case class RepeatedResult(
-      fd: FieldDescriptor,
-      accessor: String,
-      lines: Seq[Rule]
-  ) extends RenderedResult {
-    def imports = lines.flatMap(_.imports)
-    def preambles = lines.flatMap(_.preamble)
-  }
-
   def repeatedRules(
       fd: FieldDescriptor,
       rulesProto: FieldRules,
-      accessor: String
-  ): Seq[RenderedResult] = {
+      inputTransform: String => String
+  ): Seq[Rule] = {
     val itemRules = RulesGen.rulesSingle(fd, rulesProto, implicits)
 
     val messageRules = Rule.ifSet(
@@ -163,67 +173,58 @@ class MessagePrinter(
 
     if (allRules.nonEmpty)
       Seq(
-        RepeatedResult(
-          fd,
-          accessor,
-          allRules
+        RepeatedFieldRule(
+          allRules,
+          inputTransform
         )
       )
     else Seq.empty
   }
 
-  def renderedRulesForField(fd: FieldDescriptor): Seq[RenderedResult] = {
-    def toBase(e: String): String =
-      if (
-        fd.customSingleScalaTypeName.isDefined && (!fd.isMessage || !fd
-          .getMessageType()
-          .getFullName
-          .startsWith("google.protobuf."))
-      ) {
-        val tm = fd.typeMapper.fullName
-        if (fd.isRepeated() && !fd.isMapField())
-          s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
-        else if (fd.isMapField()) e
-        else if (fd.supportsPresence) s"$e.map($tm.toBase)"
-        else s"${tm}.toBase($e)"
-      } else {
-        if (fd.isRepeated && !fd.isMapField)
-          fd.collection.iterator(e, EnclosingType.None)
-        else e
-      }
-
+  def ruleForField(fd: FieldDescriptor): Option[Rule] = {
     val rulesProto =
       FieldRules.fromJavaProto(fd.getOptions.getExtension(Validate.rules))
 
-    // Accessor that has the elements type mapped to base type.
-    val accessor =
-      if (!fd.isInOneof) toBase(s"input.${fd.scalaName.asSymbol}")
-      else
-        s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName.asSymbol}"
+    val rules = innerRulesForField(fd)
+    val maybeEmptyRule =
+      IgnoreEmptyRulesGen.ignoreEmptyRule(fd, rulesProto, implicits)
 
-    // For repeated fields, this gives the collection itself. This is possibly
-    // a custom collection type with custom type items.
-    val collectionAccessor = s"input.${fd.scalaName.asSymbol}"
+    (rules, maybeEmptyRule) match {
+      case (Nil, _)                     => None
+      case (rule :: Nil, None)          => Some(rule)
+      case (rule :: Nil, Some(isEmpty)) => Some(IgnoreEmptyRule(isEmpty, rule))
+      case (rules, None)                => Some(CombineFieldRules(rules, "&&"))
+      case (rules, Some(isEmpty)) =>
+        Some(IgnoreEmptyRule(isEmpty, CombineFieldRules(rules, "&&")))
+    }
+  }
+
+  def innerRulesForField(fd: FieldDescriptor): Seq[Rule] = {
+    val rulesProto =
+      FieldRules.fromJavaProto(fd.getOptions.getExtension(Validate.rules))
 
     val rules = RulesGen.rulesSingle(fd, rulesProto, implicits)
 
     val maybeOpt =
       if ((fd.isInOneof || fd.supportsPresence) && rules.nonEmpty)
         Seq(
-          OptionalResult(
-            fd,
-            accessor,
+          OptionalFieldRule(
             rules
           )
         )
       else Seq.empty
 
-    val maybeRepeated: Seq[RenderedResult] =
+    val maybeSingular =
+      if (!fd.supportsPresence && !fd.isInOneof && rules.nonEmpty)
+        rules
+      else Seq.empty
+
+    val maybeRepeated: Seq[Rule] =
       if (fd.isRepeated() && !fd.isMapField())
         repeatedRules(
           fd,
           rulesProto.getRepeated.getItems,
-          accessor
+          e => toBase(fd, e)
         )
       else if (fd.isRepeated() && fd.isMapField()) {
         def accessKeyOrValue(index: Int) = {
@@ -237,30 +238,28 @@ class MessagePrinter(
         repeatedRules(
           fd.getMessageType().findFieldByNumber(1),
           rulesProto.getMap.getKeys,
-          fd.collection
-            .iterator(accessor, EnclosingType.None) + accessKeyOrValue(1)
+          accessor =>
+            fd.collection
+              .iterator(accessor, EnclosingType.None) + accessKeyOrValue(1)
         ) ++
           repeatedRules(
             fd.getMessageType().findFieldByNumber(2),
             rulesProto.getMap.getValues,
-            fd.collection
-              .iterator(accessor, EnclosingType.None) + accessKeyOrValue(2)
+            accessor =>
+              fd.collection
+                .iterator(accessor, EnclosingType.None) + accessKeyOrValue(2)
           )
       } else Seq.empty
 
     val messageRules = if (fd.isMessage) {
-      val maybeRequired: Option[SingularResult] = Rule.ifSet(
+      val maybeRequired: Option[Rule] = Rule.ifSet(
         !fd.supportsPresence && !fd.isRepeated && !fd.isInOneof && !rulesProto.getMessage.getSkip &&
           !fd.getMessageType.getFullName.startsWith("google.protobuf") &&
           !fd.getMessageType.getFile.scalaOptions
             .getExtension(scalapb.validate.Validate.file)
             .getSkip
       )(
-        SingularResult(
-          fd,
-          accessor,
-          Rule.messageValidate(validatorName(fd.getMessageType).fullName)
-        )
+        Rule.messageValidate(validatorName(fd.getMessageType).fullName)
       )
 
       val maybeNested = Rule.ifSet(
@@ -270,9 +269,7 @@ class MessagePrinter(
             .getExtension(scalapb.validate.Validate.file)
             .getSkip
       )(
-        OptionalResult(
-          fd,
-          accessor,
+        OptionalFieldRule(
           Seq(Rule.messageValidate(validatorName(fd.getMessageType).fullName))
         )
       )
@@ -282,40 +279,11 @@ class MessagePrinter(
 
     val maybeRequired =
       Rule.ifSet(RulesGen.isRequired(rulesProto) && !fd.noBoxRequired)(
-        SingularResult(fd, accessor, RequiredRulesGen.requiredRule)
+        RequiredRulesGen.requiredRule
       )
-
-    val maybeSingular =
-      if (!fd.supportsPresence && !fd.isInOneof && rules.nonEmpty)
-        rules.map(r =>
-          SingularResult(
-            fd,
-            if (fd.isRepeated) collectionAccessor else accessor,
-            r
-          )
-        )
-      else Seq.empty
 
     maybeSingular ++ maybeOpt ++ maybeRepeated ++ messageRules ++ maybeRequired
   }
-
-  def formatRenderedResult(
-      result: RenderedResult
-  ): Seq[String] =
-    result match {
-      case SingularResult(fd, accessor, line) =>
-        Seq(line.render(fd, accessor))
-      case OptionalResult(fd, accessor, lines0) =>
-        val lines = lines0.map(_.render(fd, "_value"))
-        Seq(s"scalapb.validate.Result.optional($accessor) { _value =>") ++
-          lines.dropRight(1).map(l => "  " + l + " &&") ++
-          Seq("  " + lines.last, "}")
-      case RepeatedResult(fd, accessor, lines0) =>
-        val lines = lines0.map(_.render(fd, "_value"))
-        Seq(s"scalapb.validate.Result.repeated($accessor) { _value =>") ++
-          lines.dropRight(1).map(l => "  " + l + " &&") ++
-          Seq("  " + lines.last, "}")
-    }
 
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
     val isRequired = oneof.getOptions().getExtension(Validate.required)

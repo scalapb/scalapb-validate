@@ -4,12 +4,16 @@ import io.envoyproxy.pgv.validate.validate.StringRules
 import Rule._
 import com.google.protobuf.Descriptors.FieldDescriptor
 
-/** StringRulesGenerator helps generate the validation code for protocol buffer string typed field
+/** StringRulesGenerator helps generate the validation code for protocol buffer
+  * string typed field
   */
 object StringRulesGen {
   private val SV: String = "io.envoyproxy.pgv.StringValidation"
   private val CV: String = "io.envoyproxy.pgv.ConstantValidation"
   private val WRX: String = "scalapb.validate.WellKnownRegex"
+
+  def maxLen(value: Long): FunctionCall =
+    Rule.java(s"$SV.maxLength", value.toString)
 
   // Copied from ScalaPB's ProtobufGenerator
   // TODO: move to common place
@@ -25,7 +29,7 @@ object StringRulesGen {
         case '\"'                      => "\\\""
         case '\''                      => "\\\'"
         case u if u >= ' ' && u <= '~' => u.toString
-        case c: Char                   => "\\u%4s".format(c.toInt.toHexString).replace(' ', '0')
+        case c: Char => "\\u%4s".format(c.toInt.toHexString).replace(' ', '0')
       }
       .mkString("\"", "", "\"")
 
@@ -37,7 +41,7 @@ object StringRulesGen {
       rules.len.map(value => Rule.java(s"$SV.length", value.toString)),
       rules.lenBytes.map(value => Rule.java(s"$SV.lenBytes", value.toString)),
       rules.minLen.map(value => Rule.java(s"$SV.minLength", value.toString)),
-      rules.maxLen.map(value => Rule.java(s"$SV.maxLength", value.toString)),
+      rules.maxLen.map(value => maxLen(value)),
       rules.minBytes.map(value => Rule.java(s"$SV.minBytes", value.toString)),
       rules.maxBytes.map(value => Rule.java(s"$SV.maxBytes", value.toString)),
       rules.contains.map(v => Rule.java(s"$SV.contains", quoted(v))),

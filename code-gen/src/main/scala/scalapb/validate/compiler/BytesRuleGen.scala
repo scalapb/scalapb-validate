@@ -16,6 +16,9 @@ object BytesRuleGen {
   def preambleByteString(pname: String, v: ByteString) =
     s"private val $pname: com.google.protobuf.ByteString = com.google.protobuf.ByteString.copyFrom(Array[Byte](${v.toByteArray.map(_.toString).mkString(", ")}))"
 
+  def maxLength(value: Long): FunctionCall =
+    Rule.java(s"$BV.maxLength", value.toString)
+
   def bytesRules(
       fd: FieldDescriptor,
       rules: BytesRules
@@ -23,7 +26,7 @@ object BytesRuleGen {
     Seq(
       rules.len.map(value => Rule.java(s"$BV.length", value.toString)),
       rules.minLen.map(value => Rule.java(s"$BV.minLength", value.toString)),
-      rules.maxLen.map(value => Rule.java(s"$BV.maxLength", value.toString)),
+      rules.maxLen.map(value => maxLength(value)),
       rules.const.map {
         val pname = s"Const_${fd.getName}"
         v =>

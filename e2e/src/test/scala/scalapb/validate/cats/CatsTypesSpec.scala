@@ -99,13 +99,13 @@ class CatsTypesSpec extends munit.FunSuite with ValidationHelpers {
     assertFailure(
       Validator[NonEmptyTypesWithSubRules].validate(invalid3),
       List(
-        ("NonEmptyTypesWithSubRules.NonEmptyMapEntry.key", Int.box(1))
+        ("NonEmptyTypesWithSubRules.non_empty_map", Int.box(1))
       )
     )
     assertFailure(
       Validator[NonEmptyTypesWithSubRules].validate(invalid4),
       List(
-        ("NonEmptyTypesWithSubRules.NonEmptyMapEntry.value", Int.box(4))
+        ("NonEmptyTypesWithSubRules.non_empty_map", Int.box(4))
       )
     )
   }

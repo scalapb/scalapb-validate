@@ -8,6 +8,32 @@ import scalapb.compiler.MethodApplication
 object RepeatedRulesGen {
   val RR = "scalapb.validate.RepeatedValidation"
 
+  def maxItems(
+      fd: FieldDescriptor,
+      value: Long,
+      desriptorImplicits: DescriptorImplicits
+  ): FunctionCall = {
+    import desriptorImplicits._
+    Rule.basic(
+      s"$RR.maxItems",
+      Seq(value.toString),
+      inputTransform = fd.collection.size
+    )
+  }
+
+  def minItems(
+      fd: FieldDescriptor,
+      value: Long,
+      desriptorImplicits: DescriptorImplicits
+  ): FunctionCall = {
+    import desriptorImplicits._
+    Rule.basic(
+      s"$RR.minItems",
+      Seq(value.toString),
+      inputTransform = fd.collection.size
+    )
+  }
+
   def repeatedRules(
       field: FieldDescriptor,
       rules: RepeatedRules,
@@ -15,20 +41,8 @@ object RepeatedRulesGen {
   ): Seq[Rule] = {
     import desriptorImplicits._
     Seq(
-      rules.minItems.map(value =>
-        Rule.basic(
-          s"$RR.minItems",
-          Seq(value.toString),
-          inputTransform = field.collection.size
-        )
-      ),
-      rules.maxItems.map(value =>
-        Rule.basic(
-          s"$RR.maxItems",
-          Seq(value.toString),
-          inputTransform = field.collection.size
-        )
-      ),
+      rules.minItems.map(value => minItems(field, value, desriptorImplicits)),
+      rules.maxItems.map(value => maxItems(field, value, desriptorImplicits)),
       Rule.ifSet(
         rules.getUnique /* && !field
           .fieldOptions

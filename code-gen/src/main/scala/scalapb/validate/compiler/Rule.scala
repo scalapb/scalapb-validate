@@ -5,22 +5,28 @@ import scalapb.compiler.Expression
 import scalapb.compiler.Identity
 import scalapb.compiler.EnclosingType
 import scalapb.compiler.FunctionApplication
+import scalapb.compiler.FunctionalPrinter
+import scalapb.compiler.FunctionalPrinter.PrinterEndo
+
+trait Rule {
+  def preamble: Seq[String]
+  def imports: Seq[String]
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo
+}
 
 /** Represents a generated function call that returns a Result.
   *
-  * funcName: fully qualified functin name. The function takes potentially the name
-  *           (if needsName is true),  then the value to be tested, then the list of
-  *           args are passed:
-  *           funcName([name], value, *args)
-  * needsName: whether the first argument is the name of the field being tested.
-  * args: arguments to pass after the value.
-  * inputTransform: transformation to apply to the value
-  * outputTransform: transformation to apply to the result of funcName
-  * imports: list of imports to add to the top of the file (no need to dedupe here)
-  * preamble: code to be added for static definitions. Can be used for constants that
-  *           needs to be computed only once.
+  * funcName: fully qualified functin name. The function takes potentially the
+  * name (if needsName is true), then the value to be tested, then the list of
+  * args are passed: funcName([name], value, *args) needsName: whether the first
+  * argument is the name of the field being tested. args: arguments to pass
+  * after the value. inputTransform: transformation to apply to the value
+  * outputTransform: transformation to apply to the result of funcName imports:
+  * list of imports to add to the top of the file (no need to dedupe here)
+  * preamble: code to be added for static definitions. Can be used for constants
+  * that needs to be computed only once.
   */
-case class Rule(
+case class FunctionCall(
     funcName: String,
     needsName: Boolean,
     args: Seq[String],
@@ -28,22 +34,22 @@ case class Rule(
     outputTranform: Expression,
     imports: Seq[String],
     preamble: Seq[String]
-) {
+) extends Rule {
   self =>
-  def render(descriptor: FieldDescriptor, input: String): String = {
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo = {
     val e =
       inputTransform(input, EnclosingType.None, false)
     val maybeName =
       if (needsName) s""""${Rule.getFullNameWithoutPackage(descriptor)}", """
       else ""
-    val base = s"""$funcName(${maybeName}${e}"""
+    val base = s"""$funcName($maybeName$e"""
     val out =
       if (args.isEmpty) base + ")"
       else base + args.mkString(", ", ", ", ")")
-    outputTranform(out, EnclosingType.None, false)
+    _.add(outputTranform(out, EnclosingType.None, false))
   }
 
-  def wrapJava: Rule =
+  def wrapJava: FunctionCall =
     copy(outputTranform =
       FunctionApplication("scalapb.validate.Result.run") andThen outputTranform
     )
@@ -53,34 +59,104 @@ case class Rule(
   def withPreamble(lines: String*) = copy(preamble = preamble ++ lines)
 }
 
+case class CombineFieldRules(rules: Seq[Rule], op: String = "&&") extends Rule {
+  def preamble: Seq[String] = rules.flatMap(_.preamble)
+  def imports: Seq[String] = rules.flatMap(_.imports)
+
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo = {
+    val lines = rules.map { r =>
+      val fp = FunctionalPrinter()
+      r.render(descriptor, input)(fp).content
+    }
+    _.addGroupsWithDelimiter(op)(lines)
+  }
+}
+
+case class IgnoreEmptyRule(isEmpty: Rule, other: Rule) extends Rule {
+  def preamble: Seq[String] = isEmpty.preamble ++ other.preamble
+  def imports: Seq[String] = isEmpty.imports ++ other.imports
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo =
+    _.add("(")
+      .indented(
+        _.call(isEmpty.render(descriptor, input))
+          .add(" ||")
+          .call(other.render(descriptor, input))
+          .add(")")
+      )
+}
+
+case class OptionalFieldRule(rules: Seq[Rule]) extends Rule {
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo = {
+    val lines = rules.map { r =>
+      val fp = FunctionalPrinter()
+      r.render(descriptor, "_value")(fp).content
+    }
+
+    _.add(
+      s"scalapb.validate.Result.optional($input) { _value =>"
+    ).indented(_.addGroupsWithDelimiter(" &&")(lines))
+      .add("}")
+  }
+
+  def preamble: Seq[String] = rules.flatMap(_.preamble)
+  def imports: Seq[String] = rules.flatMap(_.imports)
+}
+
+case class RepeatedFieldRule(rules: Seq[Rule], inputTransform: String => String)
+    extends Rule {
+  def render(descriptor: FieldDescriptor, input: String): PrinterEndo = {
+    val lines = rules.map { r =>
+      val fp = FunctionalPrinter()
+      r.render(descriptor, "_value")(fp).content
+    }
+    _.add(
+      s"scalapb.validate.Result.repeated(${inputTransform(input)}) { _value =>"
+    ).indented(_.addGroupsWithDelimiter(" &&")(lines))
+      .add("}")
+  }
+
+  def preamble: Seq[String] = rules.flatMap(_.preamble)
+  def imports: Seq[String] = rules.flatMap(_.imports)
+}
+
 object Rule {
   def basic(
       funcName: String,
       args: Seq[String],
       inputTransform: Expression = Identity
-  ): Rule =
-    Rule(funcName, true, args, inputTransform, Identity, Nil, Nil)
+  ): FunctionCall =
+    FunctionCall(funcName, true, args, inputTransform, Identity, Nil, Nil)
 
-  def basic(funcName: String, args: String*): Rule =
+  def basic(funcName: String, args: String*): FunctionCall =
     basic(funcName, args)
 
   def java(
       funcName: String,
       args: Seq[String],
       inputTransform: Expression
-  ): Rule =
+  ): FunctionCall =
     basic(funcName, args, inputTransform).wrapJava
 
-  def java(funcName: String, args: String*): Rule =
+  def java(funcName: String, args: String*): FunctionCall =
     basic(funcName, args, Identity).wrapJava
 
   def messageValidate(validator: String): Rule =
-    Rule(s"$validator.validate", false, Seq.empty, Identity, Identity, Nil, Nil)
+    FunctionCall(
+      s"$validator.validate",
+      false,
+      Seq.empty,
+      Identity,
+      Identity,
+      Nil,
+      Nil
+    )
 
   def ifSet[T](cond: => Boolean)(value: => T): Option[T] =
     if (cond) Some(value) else None
 
-  private def getFullNameWithoutPackage(descriptor: FieldDescriptor): String = {
+  private[compiler] def getFullNameWithoutPackage(
+      descriptor: FieldDescriptor
+  ): String = {
     val fullName = descriptor.getFullName
     val packageName = descriptor.getFile.getPackage
     if (packageName.isEmpty)

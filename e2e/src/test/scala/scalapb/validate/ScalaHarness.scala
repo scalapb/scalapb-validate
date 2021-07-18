@@ -36,20 +36,20 @@ import java.net.ConnectException
 
 /** How this works?
   *
-  * PGV test harness includes a go program (executor) that defines a protocol for
-  * running the test cases against an arbitrary validator that can be implemented
-  * in any programming language.
+  * PGV test harness includes a go program (executor) that defines a protocol
+  * for running the test cases against an arbitrary validator that can be
+  * implemented in any programming language.
   *
   * For each test case, the executor launches a program (provided to it as a
-  * binary), and sends an instance of a proto (wrapped in an Any) to the stdin of that
-  * program. The program validates the instance and returns back a "TestResult" containing
-  * the validity of the instance. The executor checks if the program was correct and prints
-  * a test summary.
+  * binary), and sends an instance of a proto (wrapped in an Any) to the stdin
+  * of that program. The program validates the instance and returns back a
+  * "TestResult" containing the validity of the instance. The executor checks if
+  * the program was correct and prints a test summary.
   *
-  * Done naively, this approach would require invoking the JVM (or SBT) for each of the 900+
-  * test cases provided by PGV. To get around it, we start here an HTTP server that implements
-  * the same protocol over HTTP. The executor is provided with a shell script that calls `curl`
-  * to connect to the server.
+  * Done naively, this approach would require invoking the JVM (or SBT) for each
+  * of the 900+ test cases provided by PGV. To get around it, we start here an
+  * HTTP server that implements the same protocol over HTTP. The executor is
+  * provided with a shell script that calls `curl` to connect to the server.
   */
 object ScalaHarness {
   val files = Seq(
@@ -94,34 +94,55 @@ object ScalaHarness {
       .find(_._1 == message)
       .getOrElse(throw new RuntimeException(s"Could not find message $message"))
       ._2
-    val klass = Class.forName(
-      cmp.defaultInstance.getClass().getCanonicalName() + "Validator$"
-    )
-    val vtor = klass
-      .getField("MODULE$")
-      .get(null)
-      .asInstanceOf[Validator[GeneratedMessage]]
+
     val inst = testCase.getMessage.unpack(cmp)
-    val result = vtor.validate(inst) match {
-      case Success => TestResult(valid = true)
-      case Failure(Nil) => // could be avoided with a NonEmptyList
-        sys.error(
-          "unexpected empty violation list"
+
+    val testResult =
+      try {
+        val klass = Class.forName(
+          cmp.defaultInstance.getClass().getCanonicalName() + "Validator$"
         )
-      case Failure(
-            ex :: _ // ignores multiple violations since pgv only supports one
-          ) =>
-        val allowFailure =
-          ex.reason == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
-        TestResult(
-          valid = false,
-          reasons = Seq(ex.reason),
-          allowFailure = allowFailure
-        )
-    }
+        val vtor = klass
+          .getField("MODULE$")
+          .get(null)
+          .asInstanceOf[Validator[GeneratedMessage]]
+        vtor.validate(inst) match {
+          case Success => TestResult(valid = true)
+          case Failure(Nil) => // could be avoided with a NonEmptyList
+            sys.error(
+              "unexpected empty violation list"
+            )
+          case Failure(
+                ex :: _ // ignores multiple violations since pgv only supports one
+              ) =>
+            val allowFailure =
+              ex.reason == MapValidation.SPARSE_MAPS_NOT_SUPPORTED
+            TestResult(
+              valid = false,
+              reasons = Seq(ex.reason),
+              allowFailure = allowFailure
+            )
+        }
+      } catch {
+        case ex: ClassNotFoundException =>
+          val isIgnored =
+            cmp.scalaDescriptor.asProto.getOptions
+              .extension(
+                io.envoyproxy.pgv.validate.validate.ValidateProto.ignored
+              )
+              .getOrElse(false)
+          if (isIgnored)
+            TestResult(
+              valid = false,
+              allowFailure = true,
+              reasons = Seq("Validation not generated due to ignore option")
+            )
+          else
+            TestResult(valid = false, error = false, reasons = Seq(ex.toString))
+      }
     exchange
       .getResponseSender()
-      .send(result.toByteString.asReadOnlyByteBuffer())
+      .send(testResult.toByteString.asReadOnlyByteBuffer())
   }
 
   def createScript(port: Int): Path = {
