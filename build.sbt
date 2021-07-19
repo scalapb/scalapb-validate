@@ -89,6 +89,10 @@ lazy val codeGen = projectMatrix
     name := "scalapb-validate-codegen",
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
+      // scalapb-runtime does not gent automatically added since we do not have Scala gen,
+      // and we want to make sure that a possibly older runtime (with different scalapb.proto)
+      // gets in through the common-protos dependency.
+      "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf",
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0") % "protobuf",
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0")
