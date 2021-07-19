@@ -134,8 +134,10 @@ lazy val e2e = projectMatrix
     TestProtosGenerator.generateAllTypesProtoSettings,
     Compile / PB.protoSources += (Compile / sourceManaged).value / "protobuf",
     Compile / PB.protoSources ++= (if (scalaVersion.value.startsWith("2."))
-      Seq((Compile / sourceDirectory).value / "protobuf-scala2")
-      else Seq.empty),
+                                     Seq(
+                                       (Compile / sourceDirectory).value / "protobuf-scala2"
+                                     )
+                                   else Seq.empty),
     Compile / PB.targets := Seq(
       genModule("scalapb.validate.compiler.ValidatePreprocessor$") ->
         (Compile / sourceManaged).value / "scalapb",
