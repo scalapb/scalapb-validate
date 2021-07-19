@@ -100,9 +100,10 @@ lazy val codeGen = projectMatrix
     Compile / PB.protoSources += core.base / "src" / "main" / "protobuf",
     Compile / PB.targets := Seq(
       PB.gens.java -> (Compile / sourceManaged).value / "scalapb"
-    )
+    ),
+    compileOrder := CompileOrder.JavaThenScala
   )
-  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213))
+  .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
 
 lazy val codeGenJVM212 = codeGen.jvm(Scala212)
 

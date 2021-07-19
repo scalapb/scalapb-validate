@@ -9,7 +9,7 @@ jobs:
         os: ["ubuntu-latest"]
         scala: [JVM2_12, JVM2_13, JVM3]
     runs-on: ${{ matrix.os }}
-    
+
     steps:
     - uses: actions/checkout@v1
 
@@ -22,7 +22,7 @@ jobs:
         java-version: adopt@1.11
     - name: Compile and test
       run: |
-        sbt test "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
+        sbt "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
 
     - name: Formatting
       run: |

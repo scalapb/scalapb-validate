@@ -143,7 +143,9 @@ class MessagePrinter(
         .call(printValidate)
         .print(
           message.getNestedTypes.asScala
-            .filterNot(_.getOptions().getExtension(Validate.ignored))
+            .filterNot(
+              _.getOptions().getExtension(Validate.ignored).booleanValue()
+            )
         )((fp, fd) => new MessagePrinter(implicits, fd).printObject(fp))
     ).add("}")
 
