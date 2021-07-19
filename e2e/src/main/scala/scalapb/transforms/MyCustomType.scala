@@ -7,7 +7,7 @@ import scalapb.transforms.field.MyMsg
 final case class MyCustomType(a: String)
 
 object MyCustomType {
-  implicit val tm =
+  implicit val tm: TypeMapper[MyMsg, MyCustomType] =
     TypeMapper[MyMsg, MyCustomType](pb => MyCustomType(pb.a))(custom =>
       MyMsg(custom.a)
     )

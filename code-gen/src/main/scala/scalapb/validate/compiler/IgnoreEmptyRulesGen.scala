@@ -5,14 +5,27 @@ import io.envoyproxy.pgv.validate.validate.FieldRules
 import io.envoyproxy.pgv.validate.validate.FieldRules.Type
 import scalapb.compiler.DescriptorImplicits
 import scala.language.reflectiveCalls
+import ComparativeRulesGen.NumericRules
+import scala.reflect.{classTag, ClassTag}
 
 object IgnoreEmptyRulesGen {
   type HasIgnoreEmpty = {
     def getIgnoreEmpty: Boolean
   }
 
-  def numericIsEmpty(hi: HasIgnoreEmpty): Option[Rule] =
-    Rule.ifSet(hi.getIgnoreEmpty)(ComparativeRulesGen.constRule("0"))
+  def numericIsEmpty[T: ClassTag](
+      rules: NumericRules[T] with HasIgnoreEmpty
+  ): Option[Rule] = {
+    val zero = classTag[T] match {
+      case ct if ct == classTag[Long]   => "0L"
+      case ct if ct == classTag[Int]    => "0"
+      case ct if ct == classTag[Double] => "0.0"
+      case ct if ct == classTag[Float]  => "0.0f"
+      case ct =>
+        throw new RuntimeException(s"Unsupported numeric field type $ct")
+    }
+    Rule.ifSet(rules.getIgnoreEmpty)(ComparativeRulesGen.constRule(zero))
+  }
 
   def ignoreEmptyRule(
       fd: FieldDescriptor,
@@ -74,7 +87,7 @@ object IgnoreEmptyRulesGen {
       case Type.Bool(_) =>
         None
 
-      case Type.Any(anyRules) =>
+      case Type.Any(_) =>
         None
 
       case Type.Map(mapRules) =>
@@ -82,7 +95,7 @@ object IgnoreEmptyRulesGen {
           RepeatedRulesGen.maxItems(fd, 0, di)
         )
 
-      case Type.Enum(enumRules) =>
+      case Type.Enum(_) =>
         None
 
       case _ => None

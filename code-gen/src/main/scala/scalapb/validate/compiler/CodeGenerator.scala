@@ -138,13 +138,14 @@ class MessagePrinter(
   def printObject(fp: FunctionalPrinter): FunctionalPrinter =
     fp.add(
       s"object ${objectName.name} extends $Validator[${message.scalaType.fullName}] {"
-    ).indented(_.seq(fieldRules.flatMap(_._2.preamble)))
-      .call(printValidate)
-      .print(
-        message.getNestedTypes.asScala
-          .filterNot(_.getOptions().getExtension(Validate.ignored))
-      )((fp, fd) => new MessagePrinter(implicits, fd).printObject(fp))
-      .add("}")
+    ).indented(
+      _.seq(fieldRules.flatMap(_._2.preamble))
+        .call(printValidate)
+        .print(
+          message.getNestedTypes.asScala
+            .filterNot(_.getOptions().getExtension(Validate.ignored))
+        )((fp, fd) => new MessagePrinter(implicits, fd).printObject(fp))
+    ).add("}")
 
   def content: String = {
     val fp = new FunctionalPrinter()

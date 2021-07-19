@@ -83,7 +83,7 @@ object ScalaHarness {
   val messages = files.flatMap(allMessages)
 
   val typeMap: Map[String, GeneratedMessageCompanion[_ <: GeneratedMessage]] =
-    messages.map { cmp: GeneratedMessageCompanion[_ <: GeneratedMessage] =>
+    messages.map { (cmp: GeneratedMessageCompanion[_ <: GeneratedMessage]) =>
       (cmp.scalaDescriptor.fullName, cmp)
     }.toMap
 
