@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package examplepb;
+
+import "validate/validate.proto";
+
+message Expr {
+  oneof sealed_value {
+    Literal lit = 1;
+    Add add = 2;
+    Mul mul = 3;
+  }
+}
+
+message Literal {
+  int32 value = 1;
+}
+
+message Add {
+  Expr left = 1;
+  Expr right = 2;
+}
+
+message Mul {
+  Expr left = 1;
+  Expr right = 2;
+}
+
+message Program {
+  Expr expr = 1 [(validate.rules).message.required = true];
+  repeated Expr exprs = 2;
+}
