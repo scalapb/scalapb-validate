@@ -16,6 +16,7 @@ import com.google.protobuf.TextFormat
 import io.envoyproxy.pgv.validate.Validate.FieldRules
 import io.envoyproxy.pgv.validate.Validate.RepeatedRules
 import io.envoyproxy.pgv.validate.Validate.MapRules
+import com.google.protobuf.compiler.PluginProtos.CodeGeneratorResponse
 
 object ValidatePreprocessor extends CodeGenApp {
   override def registerExtensions(registry: ExtensionRegistry): Unit = {
@@ -66,7 +67,7 @@ object ValidatePreprocessor extends CodeGenApp {
 
     Files.write(secondaryOutputFile, b)
 
-    CodeGenResponse.succeed(Nil)
+    CodeGenResponse.succeed(Nil, Set(CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL))
   }
 
   val PREPROCESSOR_NAME = "scalapb-validate-preprocessor"
