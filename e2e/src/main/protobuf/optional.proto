@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package examplepb3;
+
+import "validate/validate.proto";
+
+message Person {
+  optional string name = 1 [(validate.rules).message.required = true];
+  optional int32 age = 2;
+  optional int32 height = 3;
+}

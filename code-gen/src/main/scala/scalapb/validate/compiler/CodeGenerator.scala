@@ -44,7 +44,8 @@ object CodeGenerator extends CodeGenApp {
             file <- request.filesToGenerate
             message <- file.getMessageTypes().asScala
             if (!message.getOptions.getExtension(Validate.ignored))
-          } yield new MessagePrinter(implicits, message).result()).flatten
+          } yield new MessagePrinter(implicits, message).result()).flatten,
+          Set(CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL)
         )
       case Left(error) =>
         CodeGenResponse.fail(error)

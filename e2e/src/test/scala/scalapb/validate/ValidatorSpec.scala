@@ -2,6 +2,7 @@ package scalapb.validate
 
 import examplepb.example.Person
 import examplepb2.required.{Person => Person2}
+import examplepb3.optional.{Person => Person3}
 
 class ValidatorSpec extends munit.FunSuite with ValidationHelpers {
   val testPerson = Person(
@@ -50,5 +51,15 @@ class ValidatorSpec extends munit.FunSuite with ValidationHelpers {
       ("Person.Location.lat", Double.box(91.0)) :: Nil
     )
 
+  }
+
+  test("Optional field presence is recognized and validated") {
+    assertFailure(
+      Validator[Person3]
+        .validate(
+          Person3(name = None, age = Some(1), height = None)
+        ),
+      ("Person.name", "None") :: Nil
+    )
   }
 }
