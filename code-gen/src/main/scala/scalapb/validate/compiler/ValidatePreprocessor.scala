@@ -67,7 +67,10 @@ object ValidatePreprocessor extends CodeGenApp {
 
     Files.write(secondaryOutputFile, b)
 
-    CodeGenResponse.succeed(Nil, Set(CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL))
+    CodeGenResponse.succeed(
+      Nil,
+      Set(CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL)
+    )
   }
 
   val PREPROCESSOR_NAME = "scalapb-validate-preprocessor"
