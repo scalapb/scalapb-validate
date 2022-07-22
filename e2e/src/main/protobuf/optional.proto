@@ -9,3 +9,7 @@ message Person {
   optional int32 age = 2;
   optional int32 height = 3;
 }
+
+message RequiredMessage {
+  optional Person person = 1 [(validate.rules).message.required = true];
+}
