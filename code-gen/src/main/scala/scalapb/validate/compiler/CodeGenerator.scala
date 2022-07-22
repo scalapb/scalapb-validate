@@ -292,7 +292,7 @@ class MessagePrinter(
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
     val isRequired = oneof.getOptions().getExtension(Validate.required)
     if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof
-      .getName()}", input.${oneof.scalaName.name})"""))
+        .getName()}", input.${oneof.scalaName.name})"""))
     else Seq.empty
   }
 
@@ -304,7 +304,7 @@ class MessagePrinter(
         .setContent(content)
         .build()
     val companionInsertion = message.messageCompanionInsertionPoint.withContent(
-      s"implicit val validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
+      s"implicit def validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
     )
 
     val constructorInsertion = message.messageClassInsertionPoint.withContent(

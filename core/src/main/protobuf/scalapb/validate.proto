@@ -48,6 +48,12 @@ message FileValidationOptions {
   // protos that do not come with validator classes and your messages
   // reference them.
   optional bool skip = 5;
+
+  // List of packages that are known to not have validators generated for
+  // them. Same effect as setting `skip` to true for all files in the package.
+  // This is useful when package-scoped options for that third-party package are already
+  // defined.
+  repeated string skip_packages = 6;
 }
 
 // Falls back on file validation options (where default exists)
