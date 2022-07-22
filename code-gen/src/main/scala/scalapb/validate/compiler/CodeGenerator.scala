@@ -304,7 +304,7 @@ class MessagePrinter(
         .setContent(content)
         .build()
     val companionInsertion = message.messageCompanionInsertionPoint.withContent(
-      s"implicit val validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
+      s"implicit def validator: $Validator[${message.scalaType.fullName}] = ${objectName.fullName}"
     )
 
     val constructorInsertion = message.messageClassInsertionPoint.withContent(
