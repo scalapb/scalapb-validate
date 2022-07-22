@@ -44,7 +44,8 @@ object CodeGenerator extends CodeGenApp {
             file <- request.filesToGenerate
             message <- file.getMessageTypes().asScala
             if (!message.getOptions.getExtension(Validate.ignored))
-          } yield new MessagePrinter(implicits, message).result()).flatten
+          } yield new MessagePrinter(implicits, message).result()).flatten,
+          Set(CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL)
         )
       case Left(error) =>
         CodeGenResponse.fail(error)
@@ -291,7 +292,7 @@ class MessagePrinter(
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
     val isRequired = oneof.getOptions().getExtension(Validate.required)
     if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof
-      .getName()}", input.${oneof.scalaName.name})"""))
+        .getName()}", input.${oneof.scalaName.name})"""))
     else Seq.empty
   }
 

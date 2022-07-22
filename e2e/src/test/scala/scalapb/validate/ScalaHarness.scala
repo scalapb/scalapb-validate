@@ -13,6 +13,7 @@ import tests.harness.cases.repeated.RepeatedProto
 import tests.harness.cases.strings.StringsProto
 import tests.harness.cases.wkt_any.WktAnyProto
 import tests.harness.cases.wkt_duration.WktDurationProto
+import tests.harness.cases.wkt_nested.WktNestedProto
 import tests.harness.cases.wkt_timestamp.WktTimestampProto
 import tests.harness.cases.wkt_wrappers.WktWrappersProto
 import tests.harness.cases.other_package.embed.EmbedProto
@@ -65,6 +66,7 @@ object ScalaHarness {
     StringsProto,
     WktAnyProto,
     WktDurationProto,
+    WktNestedProto,
     WktTimestampProto,
     WktWrappersProto,
     EmbedProto
@@ -193,13 +195,14 @@ object ScalaHarness {
     val script = createScript(port)
     waitForServer(port, 10000)
     val status =
-      try Process(
-        "./executor.exe",
-        Seq(
-          "-external_harness",
-          script.toString()
-        )
-      ).!
+      try
+        Process(
+          "./executor.exe",
+          Seq(
+            "-external_harness",
+            script.toString()
+          )
+        ).!
       finally {
         Files.delete(script)
         server.stop()

@@ -21,7 +21,9 @@ object TestProtosGenerator {
        |  repeated ${v.typ} set               = 1             [(validate.rules).repeated = { unique: true }];
        |  repeated ${v.typ} non_empty_set     = 2             [(validate.rules).repeated = { min_items: 1, unique: true }];
        |  repeated ${v.typ} non_empty_list    = 3             [(validate.rules).repeated = { min_items: 1 }];
-       |  ${if (!v.mapKey) "// " else ""}map<${v.typ}, int32> non_empty_map_key = 4          [(validate.rules).map = { min_pairs: 1 }];
+       |  ${if (!v.mapKey) "// "
+      else
+        ""}map<${v.typ}, int32> non_empty_map_key = 4          [(validate.rules).map = { min_pairs: 1 }];
        |  map<int32, ${v.typ}> non_empty_map_value = 5        [(validate.rules).map = { min_pairs: 1 }];
        |}""".stripMargin
 
@@ -49,9 +51,9 @@ object TestProtosGenerator {
         |    set=Set(${v.elem}),
         |    nonEmptySet=NonEmptySet.of(${v.elem}),
         |    nonEmptyList=NonEmptyList.of(${v.elem}),${if (v.mapKey)
-      s"""
+        s"""
         |    nonEmptyMapKey=NonEmptyMap.of(${v.elem} -> 17),"""
-    else ""}
+      else ""}
         |    nonEmptyMapValue=NonEmptyMap.of(17 -> ${v.elem})
         |  )"""
 
@@ -63,8 +65,8 @@ object TestProtosGenerator {
         |object instances {
         ${types.map(makeInstance).mkString("\n")}
         |  val all: Seq[scalapb.GeneratedMessage] = Seq(${types
-      .map(_.typ)
-      .mkString(", ")})
+         .map(_.typ)
+         .mkString(", ")})
         |}""".stripMargin
 
   val generateAllTypesProto = taskKey[Seq[File]]("Generates alltypes.proto")
