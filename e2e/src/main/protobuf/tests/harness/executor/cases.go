@@ -6,6 +6,7 @@ import (
 
 	cases "github.com/envoyproxy/protoc-gen-validate/tests/harness/cases/go"
 	other_package "github.com/envoyproxy/protoc-gen-validate/tests/harness/cases/other_package/go"
+	yet_another_package "github.com/envoyproxy/protoc-gen-validate/tests/harness/cases/yet_another_package/go"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -52,6 +53,7 @@ func init() {
 		timestampCases,
 		anyCases,
 		kitchenSink,
+		nestedCases,
 	}
 
 	for _, set := range sets {
@@ -277,6 +279,10 @@ var int64Cases = []TestCase{
 	{"int64 - exclusive gte & lte - invalid", &cases.Int64ExGTELTE{Val: 200}, 1},
 
 	{"int64 - ignore_empty gte & lte - valid", &cases.Int64Ignore{Val: 0}, 0},
+
+	{"int64 optional - lte - valid", &cases.Int64LTEOptional{Val: &wrapperspb.Int64(63).Value}, 0},
+	{"int64 optional - lte - valid (equal)", &cases.Int64LTEOptional{Val: &wrapperspb.Int64(64).Value}, 0},
+	{"int64 optional - lte - valid (unset)", &cases.Int64LTEOptional{}, 0},
 }
 
 var uint32Cases = []TestCase{
@@ -1022,6 +1028,8 @@ var enumCases = []TestCase{
 	{"enum repeated (external) - defined_only - valid", &cases.RepeatedExternalEnumDefined{Val: []other_package.Embed_Enumerated{other_package.Embed_VALUE}}, 0},
 	{"enum repeated (external) - defined_only - invalid", &cases.RepeatedExternalEnumDefined{Val: []other_package.Embed_Enumerated{math.MaxInt32}}, 1},
 
+	{"enum repeated (another external) - defined_only - valid", &cases.RepeatedYetAnotherExternalEnumDefined{Val: []yet_another_package.Embed_Enumerated{yet_another_package.Embed_VALUE}}, 0},
+
 	{"enum map - defined_only - valid", &cases.MapEnumDefined{Val: map[string]cases.TestEnum{"foo": cases.TestEnum_TWO}}, 0},
 	{"enum map - defined_only - invalid", &cases.MapEnumDefined{Val: map[string]cases.TestEnum{"foo": math.MaxInt32}}, 1},
 
@@ -1055,6 +1063,9 @@ var messageCases = []TestCase{
 	{"message - cross-package embed none - valid (nil)", &cases.MessageCrossPackage{}, 0},
 	{"message - cross-package embed none - valid (empty)", &cases.MessageCrossPackage{Val: &other_package.Embed{}}, 1},
 	{"message - cross-package embed none - invalid", &cases.MessageCrossPackage{Val: &other_package.Embed{Val: -1}}, 1},
+
+	{"message - required - valid", &cases.MessageRequiredButOptional{Val: &cases.TestMsg{Const: "foo"}}, 0},
+	{"message - required - valid (unset)", &cases.MessageRequiredButOptional{}, 0},
 }
 
 var repeatedCases = []TestCase{
@@ -1171,6 +1182,7 @@ var mapCases = []TestCase{
 	{"map - recursive - valid", &cases.MapRecursive{Val: map[uint32]*cases.MapRecursive_Msg{1: {Val: "abc"}}}, 0},
 	{"map - recursive - invalid", &cases.MapRecursive{Val: map[uint32]*cases.MapRecursive_Msg{1: {}}}, 1},
 	{"map - exact - valid (ignore_empty)", &cases.MapExactIgnore{Val: nil}, 0},
+	{"map - multiple - valid", &cases.MultipleMaps{First: map[uint32]string{1: "a", 2: "b"}, Second: map[int32]bool{-1: true, -2: false}}, 0},
 }
 
 var oneofCases = []TestCase{
@@ -1418,4 +1430,9 @@ var kitchenSink = []TestCase{
 	{"kitchensink - field - embedded - invalid", &cases.KitchenSinkMessage{Val: &cases.ComplexTestMsg{Another: &cases.ComplexTestMsg{}}}, 14},
 	{"kitchensink - field - invalid (transitive)", &cases.KitchenSinkMessage{Val: &cases.ComplexTestMsg{Const: "abcd", BoolConst: true, Nested: &cases.ComplexTestMsg{}}}, 14},
 	{"kitchensink - many - all non-message fields invalid", &cases.KitchenSinkMessage{Val: &cases.ComplexTestMsg{BoolConst: true, FloatVal: &wrapperspb.FloatValue{}, TsVal: &timestamppb.Timestamp{}, FloatConst: 8, AnyVal: &anypb.Any{TypeUrl: "asdf"}, RepTsVal: []*timestamppb.Timestamp{{Nanos: 1}}}}, 13},
+}
+
+var nestedCases = []TestCase{
+	{"nested wkt uuid - field - valid", &cases.WktLevelOne{Two: &cases.WktLevelOne_WktLevelTwo{Three: &cases.WktLevelOne_WktLevelTwo_WktLevelThree{Uuid: "f81d16ef-40e2-40c6-bebc-89aaf5292f9a"}}}, 0},
+	{"nested wkt uuid - field - invalid", &cases.WktLevelOne{Two: &cases.WktLevelOne_WktLevelTwo{Three: &cases.WktLevelOne_WktLevelTwo_WktLevelThree{Uuid: "not-a-valid-uuid"}}}, 1},
 }
