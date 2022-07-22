@@ -195,13 +195,14 @@ object ScalaHarness {
     val script = createScript(port)
     waitForServer(port, 10000)
     val status =
-      try Process(
-        "./executor.exe",
-        Seq(
-          "-external_harness",
-          script.toString()
-        )
-      ).!
+      try
+        Process(
+          "./executor.exe",
+          Seq(
+            "-external_harness",
+            script.toString()
+          )
+        ).!
       finally {
         Files.delete(script)
         server.stop()

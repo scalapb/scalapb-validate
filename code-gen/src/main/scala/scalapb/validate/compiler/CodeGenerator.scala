@@ -292,7 +292,7 @@ class MessagePrinter(
   def formattedRulesForOneofs(oneof: OneofDescriptor): Seq[Seq[String]] = {
     val isRequired = oneof.getOptions().getExtension(Validate.required)
     if (isRequired) Seq(Seq(s"""scalapb.validate.RequiredValidation("${oneof
-      .getName()}", input.${oneof.scalaName.name})"""))
+        .getName()}", input.${oneof.scalaName.name})"""))
     else Seq.empty
   }
 

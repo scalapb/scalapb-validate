@@ -2,7 +2,10 @@ package scalapb.validate
 
 import examplepb.example.Person
 import examplepb2.required.{Person => Person2}
-import examplepb3.optional.{Person => Person3, RequiredMessage => RequiredMessage3}
+import examplepb3.optional.{
+  Person => Person3,
+  RequiredMessage => RequiredMessage3
+}
 
 class ValidatorSpec extends munit.FunSuite with ValidationHelpers {
   val testPerson = Person(
