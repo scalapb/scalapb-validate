@@ -92,7 +92,7 @@ object Failure {
   def apply(violation: ValidationFailure): Failure = Failure(violation :: Nil)
 }
 
-trait Validator[T] {
+trait Validator[T] extends Serializable {
   self =>
   def validate(t: T): Result
 
