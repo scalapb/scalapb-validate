@@ -1,9 +1,9 @@
 import Settings.stdSettings
 import scalapb.compiler.Version.scalapbVersion
 
-val Scala213 = "2.13.8"
+val Scala213 = "2.13.10"
 
-val Scala212 = "2.12.16"
+val Scala212 = "2.12.17"
 
 val Scala3 = "3.1.0"
 
@@ -30,7 +30,7 @@ inThisBuild(
   )
 )
 
-val pgvVersion = "0.6.1"
+val pgvVersion = "0.6.13"
 val munitSettings = Seq(
   libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
   testFrameworks += new TestFramework("munit.Framework")
@@ -127,7 +127,7 @@ lazy val e2e = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.0",
       "org.typelevel" %% "cats-core" % "2.8.0",
-      "io.undertow" % "undertow-core" % "2.2.19.Final",
+      "io.undertow" % "undertow-core" % "2.2.20.Final",
       "eu.timepit" %% "refined" % "0.10.1",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
