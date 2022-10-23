@@ -3,7 +3,7 @@ import scalapb.compiler.Version.scalapbVersion
 
 val Scala213 = "2.13.8"
 
-val Scala212 = "2.12.16"
+val Scala212 = "2.12.17"
 
 val Scala3 = "3.1.0"
 
