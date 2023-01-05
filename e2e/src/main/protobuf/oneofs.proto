@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package scalapb.test;
+
+import "scalapb/scalapb.proto";
+import "validate/validate.proto";
+
+option (scalapb.options) = {
+    import: "scalapb.test.tm"
+};
+
+message TestMessage {
+  TestBigDecimal foo = 1 [(scalapb.field).type = "_root_.scala.math.BigDecimal"];
+  oneof value {
+    TestBigDecimal bar = 2 [(scalapb.field).type = "_root_.scala.math.BigDecimal"];
+  }
+}
+
+message TestBigDecimal {}
+

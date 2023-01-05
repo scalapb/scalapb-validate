@@ -95,11 +95,15 @@ class MessagePrinter(
         .startsWith("google.protobuf."))
     ) {
       val tm = fd.typeMapper.fullName
-      if (fd.isRepeated() && !fd.isMapField())
-        s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
-      else if (fd.isMapField()) e
-      else if (fd.supportsPresence) s"$e.map($tm.toBase)"
-      else s"$tm.toBase($e)"
+      fd.enclosingType match {
+        case EnclosingType.None        => s"$tm.toBase($e)"
+        case EnclosingType.ScalaOption => s"$e.map($tm.toBase)"
+        case _: EnclosingType.Collection =>
+          if (fd.isMapField())
+            e
+          else
+            s"${fd.collection.iterator(e, EnclosingType.None)}.map($tm.toBase)"
+      }
     } else {
       if (fd.isRepeated && !fd.isMapField)
         fd.collection.iterator(e, EnclosingType.None)
@@ -114,7 +118,10 @@ class MessagePrinter(
           s"input.${fd.scalaName.asSymbol}"
         else if (!fd.isInOneof) toBase(fd, s"input.${fd.scalaName.asSymbol}")
         else
-          s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName.asSymbol}"
+          toBase(
+            fd,
+            s"input.${fd.getContainingOneof.scalaName.nameSymbol}.${fd.scalaName.asSymbol}"
+          )
 
       rule.render(fd, accessor)(FunctionalPrinter()).content
     }
