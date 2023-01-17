@@ -125,7 +125,7 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.0",
+      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",
       "org.typelevel" %% "cats-core" % "2.8.0",
       "io.undertow" % "undertow-core" % "2.3.3.Final",
       "eu.timepit" %% "refined" % "0.10.1",
