@@ -5,7 +5,7 @@ val Scala213 = "2.13.10"
 
 val Scala212 = "2.12.17"
 
-val Scala3 = "3.1.0"
+val Scala3 = "3.2.2"
 
 publish / skip := true
 
@@ -125,7 +125,7 @@ lazy val e2e = projectMatrix
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
-      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.0",
+      "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",
       "org.typelevel" %% "cats-core" % "2.8.0",
       "io.undertow" % "undertow-core" % "2.3.3.Final",
       "eu.timepit" %% "refined" % "0.10.1",
