@@ -12,7 +12,7 @@ class OptionsSpec extends munit.FunSuite {
         "could not find implicit value for evidence parameter of type scalapb.validate.Validator["
       ) ||
         error.contains(
-          "no implicit argument of type scalapb.validate.Validator"
+          "No given instance of type scalapb.validate.Validator[examplepb.options.NoValidator] was found"
         ),
       clues(error)
     )
