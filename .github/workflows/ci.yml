@@ -11,22 +11,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
 
     - name: Download test executor
       run: |
         ./make_harness.sh
 
-    - uses: olafurpg/setup-scala@v12
+    - uses: actions/setup-java@v3
       with:
-        java-version: adopt@1.8
+        java-version: 8
+        distribution: temurin
     - name: Compile and test
       run: |
         sbt "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
 
     - name: Formatting
       run: |
-        sbt scalafmtCheck test:scalafmtCheck scalafmtSbtCheck
+        sbt scalafmtCheckAll scalafmtSbtCheck
 
     - name: Run example project
       run: |
