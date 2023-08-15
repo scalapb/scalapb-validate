@@ -71,7 +71,7 @@ lazy val cats = projectMatrix
   .settings(
     name := "scalapb-validate-cats",
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.9.0" % "provided",
+      "org.typelevel" %% "cats-core" % "2.10.0" % "provided",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "provided"
     )
   )
@@ -126,7 +126,7 @@ lazy val e2e = projectMatrix
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",
-      "org.typelevel" %% "cats-core" % "2.9.0",
+      "org.typelevel" %% "cats-core" % "2.10.0",
       "io.undertow" % "undertow-core" % "2.3.7.Final",
       "eu.timepit" %% "refined" % "0.11.0",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
