@@ -11,6 +11,8 @@ publish / skip := true
 
 sonatypeProfileName := "com.thesamet"
 
+def protobufJava = "com.google.protobuf" % "protobuf-java" % "3.24.4"
+
 inThisBuild(
   List(
     organization := "com.thesamet.scalapb",
@@ -26,7 +28,7 @@ inThisBuild(
         url("https://www.thesamet.com")
       )
     ),
-    PB.protocVersion := "3.15.6"
+    PB.protocVersion := protobufJava.revision
   )
 )
 
@@ -44,6 +46,7 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
+      protobufJava,
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
@@ -88,6 +91,7 @@ lazy val codeGen = projectMatrix
     buildInfoPackage := "scalapb.validate.compiler",
     name := "scalapb-validate-codegen",
     libraryDependencies ++= Seq(
+      protobufJava,
       "com.thesamet.scalapb" %% "compilerplugin" % scalapbVersion,
       // scalapb-runtime does not gent automatically added since we do not have Scala gen,
       // and we want to make sure that a possibly older runtime (with different scalapb.proto)
