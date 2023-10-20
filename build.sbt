@@ -121,6 +121,8 @@ lazy val e2e = projectMatrix
   .settings(stdSettings)
   .settings(munitSettings)
   .settings(
+    run / baseDirectory := (LocalRootProject / baseDirectory).value,
+    run / fork := true,
     publish / skip := true,
     crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,

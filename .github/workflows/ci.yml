@@ -19,11 +19,11 @@ jobs:
 
     - uses: actions/setup-java@v3
       with:
-        java-version: 8
+        java-version: 11
         distribution: temurin
     - name: Compile and test
       run: |
-        sbt "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/test:runMain scalapb.validate.ScalaHarness"
+        sbt "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/Test/runMain scalapb.validate.ScalaHarness"
 
     - name: Formatting
       run: |
