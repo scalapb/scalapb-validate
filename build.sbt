@@ -11,7 +11,7 @@ publish / skip := true
 
 sonatypeProfileName := "com.thesamet"
 
-def protobufJava = "com.google.protobuf" % "protobuf-java" % "3.25.0"
+def protobufJava = "com.google.protobuf" % "protobuf-java" % "3.25.1"
 
 inThisBuild(
   List(
