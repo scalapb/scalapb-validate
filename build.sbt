@@ -46,7 +46,6 @@ lazy val core = projectMatrix
   .settings(
     name := "scalapb-validate-core",
     libraryDependencies ++= Seq(
-      protobufJava,
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0"),
       "com.thesamet.scalapb.common-protos" %% "pgv-proto-scalapb_0.11" % (pgvVersion + "-0") % "protobuf",
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapbVersion % "protobuf"
