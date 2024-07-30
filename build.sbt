@@ -11,7 +11,7 @@ publish / skip := true
 
 sonatypeProfileName := "com.thesamet"
 
-def protobufJava = "com.google.protobuf" % "protobuf-java" % "3.25.3"
+def protobufJava = "com.google.protobuf" % "protobuf-java" % "3.25.4"
 
 inThisBuild(
   List(
@@ -132,7 +132,7 @@ lazy val e2e = projectMatrix
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",
       "org.typelevel" %% "cats-core" % "2.12.0",
-      "io.undertow" % "undertow-core" % "2.3.14.Final",
+      "io.undertow" % "undertow-core" % "2.3.15.Final",
       "eu.timepit" %% "refined" % "0.11.2",
       "io.envoyproxy.protoc-gen-validate" % "pgv-java-stub" % pgvVersion % "protobuf"
     ),
