@@ -1,7 +1,7 @@
 import Settings.stdSettings
 import scalapb.compiler.Version.scalapbVersion
 
-val Scala213 = "2.13.14"
+val Scala213 = "2.13.15"
 
 val Scala212 = "2.12.20"
 
