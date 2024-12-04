@@ -34,7 +34,7 @@ inThisBuild(
 
 val pgvVersion = "0.6.13"
 val munitSettings = Seq(
-  libraryDependencies += "org.scalameta" %% "munit" % "1.0.2" % Test,
+  libraryDependencies += "org.scalameta" %% "munit" % "1.0.3" % Test,
   testFrameworks += new TestFramework("munit.Framework")
 )
 
