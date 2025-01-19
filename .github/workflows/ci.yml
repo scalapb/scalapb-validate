@@ -21,6 +21,9 @@ jobs:
       with:
         java-version: 11
         distribution: temurin
+
+    - uses: sbt/setup-sbt@v1
+
     - name: Compile and test
       run: |
         sbt "core${{matrix.scala}}/test" "codeGen${{matrix.scala}}/test" "e2e${{matrix.scala}}/test" "e2e${{matrix.scala}}/Test/runMain scalapb.validate.ScalaHarness"
