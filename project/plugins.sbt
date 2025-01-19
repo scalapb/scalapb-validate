@@ -2,7 +2,7 @@ addSbtPlugin("com.thesamet" % "sbt-protoc" % "1.0.7")
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.17"
 
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
 
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.9.0")
 
