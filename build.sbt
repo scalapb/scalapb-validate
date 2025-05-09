@@ -5,7 +5,7 @@ val Scala213 = "2.13.15"
 
 val Scala212 = "2.12.20"
 
-val Scala3 = "3.3.5"
+val Scala3 = "3.3.6"
 
 publish / skip := true
 
