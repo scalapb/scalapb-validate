@@ -7,7 +7,7 @@ trait ValidationHelpers {
       loc: munit.Location
   ) =
     r match {
-      case Success => fail("expected a Failure, but was a Success")
+      case Success             => fail("expected a Failure, but was a Success")
       case Failure(violations) =>
         val fieldAndValues = violations.map { v =>
           v.field -> v.value

@@ -21,7 +21,7 @@ object IgnoreEmptyRulesGen {
       case ct if ct == classTag[Int]    => "0"
       case ct if ct == classTag[Double] => "0.0"
       case ct if ct == classTag[Float]  => "0.0f"
-      case ct =>
+      case ct                           =>
         throw new RuntimeException(s"Unsupported numeric field type $ct")
     }
     Rule.ifSet(rules.getIgnoreEmpty)(ComparativeRulesGen.constRule(zero))
