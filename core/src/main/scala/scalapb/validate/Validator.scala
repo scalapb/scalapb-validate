@@ -42,7 +42,7 @@ case class ValidationFailure(field: String, value: Any, reason: String) {
 object Result {
   def run[T](code: => T): Result =
     Try(code) match {
-      case scala.util.Success(_) => Success
+      case scala.util.Success(_)                          => Success
       case scala.util.Failure(e: pgv.ValidationException) =>
         Failure(
           new ValidationFailure(
@@ -118,7 +118,7 @@ object Validator {
 
   def assertValid[T: Validator](instance: T): Unit =
     Validator[T].validate(instance) match {
-      case Success =>
+      case Success          =>
       case failure: Failure =>
         throw new FieldValidationException(failure)
     }

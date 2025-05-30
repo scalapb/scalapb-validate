@@ -109,7 +109,7 @@ object ScalaHarness {
           .get(null)
           .asInstanceOf[Validator[GeneratedMessage]]
         vtor.validate(inst) match {
-          case Success => TestResult(valid = true)
+          case Success      => TestResult(valid = true)
           case Failure(Nil) => // could be avoided with a NonEmptyList
             sys.error(
               "unexpected empty violation list"

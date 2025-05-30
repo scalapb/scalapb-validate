@@ -96,8 +96,8 @@ class MessagePrinter(
     ) {
       val tm = fd.typeMapper.fullName
       fd.enclosingType match {
-        case EnclosingType.None        => s"$tm.toBase($e)"
-        case EnclosingType.ScalaOption => s"$e.map($tm.toBase)"
+        case EnclosingType.None          => s"$tm.toBase($e)"
+        case EnclosingType.ScalaOption   => s"$e.map($tm.toBase)"
         case _: EnclosingType.Collection =>
           if (fd.isMapField())
             e
@@ -205,7 +205,7 @@ class MessagePrinter(
       case (rule :: Nil, None)          => Some(rule)
       case (rule :: Nil, Some(isEmpty)) => Some(IgnoreEmptyRule(isEmpty, rule))
       case (rules, None)                => Some(CombineFieldRules(rules, "&&"))
-      case (rules, Some(isEmpty)) =>
+      case (rules, Some(isEmpty))       =>
         Some(IgnoreEmptyRule(isEmpty, CombineFieldRules(rules, "&&")))
     }
   }
