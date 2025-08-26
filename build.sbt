@@ -126,7 +126,6 @@ lazy val e2e = projectMatrix
     run / baseDirectory := (LocalRootProject / baseDirectory).value,
     run / fork := true,
     publish / skip := true,
-    crossScalaVersions := Seq(Scala212, Scala213),
     codeGenClasspath := (codeGenJVM212 / Compile / fullClasspath).value,
     libraryDependencies ++= Seq(
       "com.thesamet.scalapb" %% "scalapb-json4s" % "0.12.1",
